@@ -1,0 +1,8 @@
+.git
+.github
+target
+server/target
+flutter/build
+flutter/.dart_tool
+**/.DS_Store
+**/*.log

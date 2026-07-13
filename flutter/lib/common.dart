@@ -2423,7 +2423,7 @@ List<String>? urlLinkToCmdArgs(Uri uri) {
               'Y';
       if (!allowDeepLinkServerSettings) {
         debugPrint(
-            "Ignore rustdesk://config because $kOptionAllowDeepLinkServerSettings is not enabled.");
+            "Ignore codedesk://config because $kOptionAllowDeepLinkServerSettings is not enabled.");
         // Keep the user-facing error generic; detailed rejection reason is in debug logs.
         // Delay toast to avoid missing overlay during cold-start deeplink handling.
         Timer(Duration(seconds: 1), () {
@@ -2444,7 +2444,7 @@ List<String>? urlLinkToCmdArgs(Uri uri) {
           bind.mainGetBuildinOption(key: kOptionAllowDeepLinkPassword) == 'Y';
       if (!allowDeepLinkPassword) {
         debugPrint(
-            "Ignore rustdesk://password because $kOptionAllowDeepLinkPassword is not enabled.");
+            "Ignore codedesk://password because $kOptionAllowDeepLinkPassword is not enabled.");
         // Keep the user-facing error generic; detailed rejection reason is in debug logs.
         // Delay toast to avoid missing overlay during cold-start deeplink handling.
         Timer(Duration(seconds: 1), () {
@@ -2469,9 +2469,9 @@ List<String>? urlLinkToCmdArgs(Uri uri) {
   } else if (uri.authority.length > 2 &&
       (uri.path.length <= 1 ||
           (uri.path == '/r' || uri.path.startsWith('/r@')))) {
-    // rustdesk://<connect-id>
-    // rustdesk://<connect-id>/r
-    // rustdesk://<connect-id>/r@<server>
+    // codedesk://<connect-id>
+    // codedesk://<connect-id>/r
+    // codedesk://<connect-id>/r@<server>
     command = '--connect';
     id = uri.authority;
     if (uri.path.length > 1) {
@@ -3075,7 +3075,7 @@ Future<void> updateSystemWindowTheme() async {
 ///
 /// Note: not found a general solution for rust based AVFoundation bingding.
 /// [AVFoundation] crate has compile error.
-const kMacOSPermChannel = MethodChannel("org.rustdesk.rustdesk/host");
+const kMacOSPermChannel = MethodChannel("com.codedesk.remote/host");
 
 enum PermissionAuthorizeType {
   undetermined,
@@ -3744,7 +3744,7 @@ Widget loadPowered(BuildContext context) {
     cursor: SystemMouseCursors.click,
     child: GestureDetector(
       onTap: () {
-        launchUrl(Uri.parse('https://rustdesk.com'));
+        showCodeDeskLicenses(context);
       },
       child: Opacity(
           opacity: 0.5,
@@ -3758,6 +3758,70 @@ Widget loadPowered(BuildContext context) {
           )),
     ),
   ).marginOnly(top: 6);
+}
+
+const codeDeskAttribution =
+    'CodeDesk is based on the open-source RustDesk project. CodeDesk is an independent project and is not affiliated with or endorsed by RustDesk.';
+
+const _codeDeskSourceUrl =
+    String.fromEnvironment('CODEDESK_SOURCE_URL', defaultValue: '');
+
+String codeDeskSourceUrl() {
+  return _codeDeskSourceUrl;
+}
+
+void showCodeDeskLicenses(BuildContext context) {
+  showLicensePage(
+    context: context,
+    applicationName: bind.mainGetAppNameSync(),
+    applicationVersion: version,
+    applicationLegalese: codeDeskAttribution,
+  );
+}
+
+Future<void> openCodeDeskSource(BuildContext context) async {
+  final source = codeDeskSourceUrl();
+  final uri = Uri.tryParse(source);
+  if (uri != null &&
+      (uri.scheme == 'https' || uri.scheme == 'http') &&
+      await canLaunchUrl(uri)) {
+    await launchUrl(uri);
+    return;
+  }
+  if (!context.mounted) {
+    return;
+  }
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Source code'),
+      content: const Text(
+          'This build does not define a source repository URL. Distributors must set CODEDESK_SOURCE_URL when packaging CodeDesk. The source for this build is provided through its CodeDesk repository.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: Text(translate('OK')),
+        ),
+      ],
+    ),
+  );
+}
+
+Future<void> showCodeDeskPrivacy(BuildContext context) async {
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(translate('Privacy Statement')),
+      content: const Text(
+          'CodeDesk is designed for self-hosting. AI API keys, source code, and terminal content must not be sent to rendezvous or relay services. This independent baseline preserves inherited connection defaults for compatibility testing; distributors must disclose and configure all network services before release.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: Text(translate('OK')),
+        ),
+      ],
+    ),
+  );
 }
 
 const _kDefaultLogoAsset = 'assets/logo.png';

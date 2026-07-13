@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose a scoped CodeDesk capability
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe the remote-work or coding workflow and who encounters it.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Explain the user-visible outcome, including fallback to general remote control where applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security and privacy boundary
+      description: Identify data accessed, where code runs, permissions required, and whether any server sees content.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility considerations
+      description: Note platforms, protocol impact, RustDesk coexistence, and older client/server behavior.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope confirmation
+      options:
+        - label: This request keeps CodeDesk usable as a general remote-control product.
+          required: true
+        - label: This request does not require sending AI API keys, source code, or terminal content to rendezvous/relay services.
+          required: true

@@ -1,7 +1,7 @@
 [package]
 name = "rustdesk_server"
 version = "0.1.2"
-description = "rustdesk server gui"
+description = "CodeDesk server GUI"
 authors = ["elilchen"]
 edition = "2021"
 

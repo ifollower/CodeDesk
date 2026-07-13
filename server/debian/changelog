@@ -1,3 +1,11 @@
+codedesk-server (1.1.15+codedesk1) UNRELEASED; urgency=medium
+
+  * Establish the independent CodeDesk server baseline.
+  * Build against the repository root libs/hbb_common source.
+  * Use CodeDesk package, service, state, and log names for coexistence.
+
+ -- CodeDesk Contributors  Tue, 14 Jul 2026 00:00:00 +0800
+
 rustdesk-server (1.1.15) UNRELEASED; urgency=medium
 
   * Fix: 127.0.0.1 is not loopback (#515)

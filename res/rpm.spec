@@ -1,17 +1,16 @@
-Name:       rustdesk
+Name:       codedesk
 Version:    1.4.9
 Release:    0
-Summary:    RPM package
-License:    GPL-3.0
-URL:        https://rustdesk.com
-Vendor:     rustdesk <info@rustdesk.com>
+Summary:    CodeDesk open-source remote workspace
+License:    AGPL-3.0
+Vendor:     CodeDesk Contributors
 Requires:   gtk3 libxcb libXfixes alsa-lib libva2 pam gstreamer1-plugins-base
 Recommends: libayatana-appindicator-gtk3 libxdo
 
 # https://docs.fedoraproject.org/en-US/packaging-guidelines/Scriptlets/
 
 %description
-The best open-source remote desktop client software, written in Rust.
+An open-source remote workspace for controlling development machines.
 
 %prep
 # we have no source, so nothing here
@@ -23,27 +22,27 @@ The best open-source remote desktop client software, written in Rust.
 
 %install
 mkdir -p %{buildroot}/usr/bin/
-mkdir -p %{buildroot}/usr/share/rustdesk/
-mkdir -p %{buildroot}/usr/share/rustdesk/files/
+mkdir -p %{buildroot}/usr/share/codedesk/
+mkdir -p %{buildroot}/usr/share/codedesk/files/
 mkdir -p %{buildroot}/usr/share/icons/hicolor/256x256/apps/
 mkdir -p %{buildroot}/usr/share/icons/hicolor/scalable/apps/
-install -m 755 $HBB/target/release/rustdesk %{buildroot}/usr/bin/rustdesk
-install $HBB/libsciter-gtk.so %{buildroot}/usr/share/rustdesk/libsciter-gtk.so
-install $HBB/res/rustdesk.service %{buildroot}/usr/share/rustdesk/files/
-install $HBB/res/128x128@2x.png %{buildroot}/usr/share/icons/hicolor/256x256/apps/rustdesk.png
-install $HBB/res/scalable.svg %{buildroot}/usr/share/icons/hicolor/scalable/apps/rustdesk.svg
-install $HBB/res/rustdesk.desktop %{buildroot}/usr/share/rustdesk/files/
-install $HBB/res/rustdesk-link.desktop %{buildroot}/usr/share/rustdesk/files/
+install -m 755 $HBB/target/release/codedesk %{buildroot}/usr/bin/codedesk
+install $HBB/libsciter-gtk.so %{buildroot}/usr/share/codedesk/libsciter-gtk.so
+install $HBB/res/codedesk.service %{buildroot}/usr/share/codedesk/files/
+install $HBB/res/128x128@2x.png %{buildroot}/usr/share/icons/hicolor/256x256/apps/codedesk.png
+install $HBB/res/scalable.svg %{buildroot}/usr/share/icons/hicolor/scalable/apps/codedesk.svg
+install $HBB/res/codedesk.desktop %{buildroot}/usr/share/codedesk/files/
+install $HBB/res/codedesk-link.desktop %{buildroot}/usr/share/codedesk/files/
 
 %files
-/usr/bin/rustdesk
-/usr/share/rustdesk/libsciter-gtk.so
-/usr/share/rustdesk/files/rustdesk.service
-/usr/share/icons/hicolor/256x256/apps/rustdesk.png
-/usr/share/icons/hicolor/scalable/apps/rustdesk.svg
-/usr/share/rustdesk/files/rustdesk.desktop
-/usr/share/rustdesk/files/rustdesk-link.desktop
-/usr/share/rustdesk/files/__pycache__/*
+/usr/bin/codedesk
+/usr/share/codedesk/libsciter-gtk.so
+/usr/share/codedesk/files/codedesk.service
+/usr/share/icons/hicolor/256x256/apps/codedesk.png
+/usr/share/icons/hicolor/scalable/apps/codedesk.svg
+/usr/share/codedesk/files/codedesk.desktop
+/usr/share/codedesk/files/codedesk-link.desktop
+/usr/share/codedesk/files/__pycache__/*
 
 %changelog
 # let's skip this for now
@@ -56,26 +55,26 @@ case "$1" in
   ;;
   2)
     # for upgrade
-    systemctl stop rustdesk || true
+    systemctl stop codedesk || true
   ;;
 esac
 
 %post
-cp /usr/share/rustdesk/files/rustdesk.service /etc/systemd/system/rustdesk.service
-cp /usr/share/rustdesk/files/rustdesk.desktop /usr/share/applications/
-cp /usr/share/rustdesk/files/rustdesk-link.desktop /usr/share/applications/
+cp /usr/share/codedesk/files/codedesk.service /etc/systemd/system/codedesk.service
+cp /usr/share/codedesk/files/codedesk.desktop /usr/share/applications/
+cp /usr/share/codedesk/files/codedesk-link.desktop /usr/share/applications/
 systemctl daemon-reload
-systemctl enable rustdesk
-systemctl start rustdesk
+systemctl enable codedesk
+systemctl start codedesk
 update-desktop-database
 
 %preun
 case "$1" in
   0)
     # for uninstall
-    systemctl stop rustdesk || true
-    systemctl disable rustdesk || true
-    rm /etc/systemd/system/rustdesk.service || true
+    systemctl stop codedesk || true
+    systemctl disable codedesk || true
+    rm /etc/systemd/system/codedesk.service || true
   ;;
   1)
     # for upgrade
@@ -86,8 +85,8 @@ esac
 case "$1" in
   0)
     # for uninstall
-    rm /usr/share/applications/rustdesk.desktop || true
-    rm /usr/share/applications/rustdesk-link.desktop || true
+    rm /usr/share/applications/codedesk.desktop || true
+    rm /usr/share/applications/codedesk-link.desktop || true
     update-desktop-database
   ;;
   1)

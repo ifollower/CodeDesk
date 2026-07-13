@@ -18,15 +18,15 @@ impl IDesktopService for WindowsDesktopService {
         call(
             [
                 "echo.",
-                "%nssm% stop hbbr",
-                "%nssm% remove hbbr confirm",
-                "%nssm% stop hbbs",
-                "%nssm% remove hbbs confirm",
+                "%nssm% stop codedesk-hbbr",
+                "%nssm% remove codedesk-hbbr confirm",
+                "%nssm% stop codedesk-hbbs",
+                "%nssm% remove codedesk-hbbs confirm",
                 "mkdir logs",
                 "echo.",
-                "service\\run.cmd hbbs",
+                "service\\run.cmd codedesk-hbbs hbbs",
                 "echo.",
-                "service\\run.cmd hbbr",
+                "service\\run.cmd codedesk-hbbr hbbr",
                 "echo.",
                 "@ping 127.1 -n 3 >nul",
             ]
@@ -38,11 +38,11 @@ impl IDesktopService for WindowsDesktopService {
         call(
             [
                 "echo.",
-                "%nssm% stop hbbr",
-                "%nssm% remove hbbr confirm",
+                "%nssm% stop codedesk-hbbr",
+                "%nssm% remove codedesk-hbbr confirm",
                 "echo.",
-                "%nssm% stop hbbs",
-                "%nssm% remove hbbs confirm",
+                "%nssm% stop codedesk-hbbs",
+                "%nssm% remove codedesk-hbbs confirm",
                 "echo.",
                 "@ping 127.1 -n 3 >nul",
             ]
@@ -51,17 +51,17 @@ impl IDesktopService for WindowsDesktopService {
         self.check();
     }
     fn restart(&mut self) {
-        nssm(["restart", "hbbs"].map(|x| x.to_owned()));
-        nssm(["restart", "hbbr"].map(|x| x.to_owned()));
+        nssm(["restart", "codedesk-hbbs"].map(|x| x.to_owned()));
+        nssm(["restart", "codedesk-hbbr"].map(|x| x.to_owned()));
         self.check();
     }
     fn pause(&mut self) {
         call(
             [
                 "echo.",
-                "%nssm% stop hbbr",
+                "%nssm% stop codedesk-hbbr",
                 "echo.",
-                "%nssm% stop hbbs",
+                "%nssm% stop codedesk-hbbs",
                 "echo.",
                 "@ping 127.1 -n 3 >nul",
             ]
@@ -70,7 +70,7 @@ impl IDesktopService for WindowsDesktopService {
         self.check();
     }
     fn check(&mut self) -> DesktopServiceState {
-        self.state = match service_status("hbbs").as_str() {
+        self.state = match service_status("codedesk-hbbs").as_str() {
             "Running" => DesktopServiceState::Started,
             // "Stopped" => DeskServerServiceState::Paused,
             _ => DesktopServiceState::Stopped,

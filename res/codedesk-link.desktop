@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=CodeDesk
+NoDisplay=true
+MimeType=x-scheme-handler/codedesk;
+TryExec=codedesk
+Exec=codedesk %u
+Icon=codedesk
+Terminal=false
+Type=Application
+StartupNotify=false
+StartupWMClass=codedesk

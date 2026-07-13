@@ -1,0 +1,65 @@
+#!/bin/sh
+
+# PROVIDE: codedesk_hbbr
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# codedesk_hbbr_enable (bool):            Set to NO by default.
+#               Set it to YES to enable codedesk_hbbr.
+# codedesk_hbbr_args (string):            Set extra arguments to pass to codedesk_hbbr
+#               Default is "-k _".
+# codedesk_hbbr_user (string):            Set user that codedesk_hbbr will run under
+#               Default is "root".
+# codedesk_hbbr_group (string):           Set group that codedesk_hbbr will run under
+#               Default is "wheel".
+
+. /etc/rc.subr
+
+name=codedesk_hbbr
+desc="CodeDesk Relay Server"
+rcvar=codedesk_hbbr_enable
+
+load_rc_config $name
+
+: ${codedesk_hbbr_enable:=NO}
+: ${codedesk_hbbr_args="-k _"}
+: ${codedesk_hbbr_user:=codedesk}
+: ${codedesk_hbbr_group:=codedesk}
+
+pidfile=/var/run/codedesk_hbbr.pid
+command=/usr/sbin/daemon
+procname=/usr/local/sbin/hbbr
+codedesk_hbbr_chdir=/var/db/codedesk-server
+command_args="-p ${pidfile} -o /var/log/codedesk-hbbr.log ${procname} ${codedesk_hbbr_args}"
+## If you want the daemon do its log over syslog comment out the above line and remove the comment from the below replacement
+#command_args="-p ${pidfile} -T ${name} ${procname} ${codedesk_hbbr_args}"
+
+start_precmd=codedesk_hbbr_startprecmd
+
+codedesk_hbbr_startprecmd()
+{
+    if [ -e ${pidfile} ]; then
+        chown ${codedesk_hbbr_user}:${codedesk_hbbr_group} ${pidfile};
+    else
+        install -o ${codedesk_hbbr_user} -g ${codedesk_hbbr_group} /dev/null ${pidfile};
+    fi
+    if [ -e ${codedesk_hbbr_chdir} ]; then
+        chown -R ${codedesk_hbbr_user}:${codedesk_hbbr_group} ${codedesk_hbbr_chdir};
+        chmod -R 770 ${codedesk_hbbr_chdir};
+    else
+        mkdir -m 770 ${codedesk_hbbr_chdir};
+        chown ${codedesk_hbbr_user}:${codedesk_hbbr_group} ${codedesk_hbbr_chdir};
+    fi
+    if [ -e /var/log/codedesk-hbbr.log ]; then
+        chown -R ${codedesk_hbbr_user}:${codedesk_hbbr_group} /var/log/codedesk-hbbr.log;
+        chmod 660 /var/log/codedesk-hbbr.log;
+    else
+        install -o ${codedesk_hbbr_user} -g ${codedesk_hbbr_group} /dev/null /var/log/codedesk-hbbr.log;
+        chmod 660 /var/log/codedesk-hbbr.log;
+    fi
+}
+
+run_rc_command "$1"

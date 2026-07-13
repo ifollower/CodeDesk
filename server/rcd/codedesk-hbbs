@@ -1,0 +1,68 @@
+#!/bin/sh
+
+# PROVIDE: codedesk_hbbs
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# codedesk_hbbs_enable (bool):            Set to NO by default.
+#               Set it to YES to enable codedesk_hbbs.
+# codedesk_hbbs_ip (string):              Set IP address/hostname of relay server to use
+#               Defaults to "127.0.0.1", please replace with your server hostname/IP.
+# codedesk_hbbs_args (string):            Set extra arguments to pass to codedesk_hbbs
+#               Default is "-r ${codedesk_hbbs_ip} -k _".
+# codedesk_hbbs_user (string):            Set user that codedesk_hbbs will run under
+#               Default is "root".
+# codedesk_hbbs_group (string):           Set group that codedesk_hbbs will run under
+#               Default is "wheel".
+
+. /etc/rc.subr
+
+name=codedesk_hbbs
+desc="CodeDesk ID/Rendezvous Server"
+rcvar=codedesk_hbbs_enable
+
+load_rc_config $name
+
+: ${codedesk_hbbs_enable:=NO}
+: ${codedesk_hbbs_ip:=127.0.0.1}
+: ${codedesk_hbbs_args="-r ${codedesk_hbbs_ip} -k _"}
+: ${codedesk_hbbs_user:=codedesk}
+: ${codedesk_hbbs_group:=codedesk}
+
+pidfile=/var/run/codedesk_hbbs.pid
+command=/usr/sbin/daemon
+procname=/usr/local/sbin/hbbs
+codedesk_hbbs_chdir=/var/db/codedesk-server
+command_args="-p ${pidfile} -o /var/log/codedesk-hbbs.log ${procname} ${codedesk_hbbs_args}"
+## If you want the daemon to do its log over syslog, comment out the above line and remove the comment from the below replacement
+#command_args="-p ${pidfile} -T ${name} ${procname} ${codedesk_hbbs_args}"
+
+start_precmd=codedesk_hbbs_startprecmd
+
+codedesk_hbbs_startprecmd()
+{
+    if [ -e ${pidfile} ]; then
+        chown ${codedesk_hbbs_user}:${codedesk_hbbs_group} ${pidfile};
+    else
+        install -o ${codedesk_hbbs_user} -g ${codedesk_hbbs_group} /dev/null ${pidfile};
+    fi
+    if [ -e ${codedesk_hbbs_chdir} ]; then
+        chown -R ${codedesk_hbbs_user}:${codedesk_hbbs_group} ${codedesk_hbbs_chdir};
+        chmod -R 770 ${codedesk_hbbs_chdir};
+    else
+        mkdir -m 770 ${codedesk_hbbs_chdir};
+        chown ${codedesk_hbbs_user}:${codedesk_hbbs_group} ${codedesk_hbbs_chdir};
+    fi
+    if [ -e /var/log/codedesk-hbbs.log ]; then
+        chown -R ${codedesk_hbbs_user}:${codedesk_hbbs_group} /var/log/codedesk-hbbs.log;
+        chmod 660 /var/log/codedesk-hbbs.log;
+    else
+        install -o ${codedesk_hbbs_user} -g ${codedesk_hbbs_group} /dev/null /var/log/codedesk-hbbs.log;
+        chmod 660 /var/log/codedesk-hbbs.log;
+    fi
+}
+
+run_rc_command "$1"

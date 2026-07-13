@@ -1,0 +1,18 @@
+[Unit]
+Description=CodeDesk Relay Server
+After=network.target
+
+[Service]
+Type=simple
+LimitNOFILE=1000000
+ExecStart=/usr/bin/hbbr
+WorkingDirectory=/var/lib/codedesk-server/
+User=
+Group=
+Restart=always
+StandardOutput=append:/var/log/codedesk-server/hbbr.log
+StandardError=append:/var/log/codedesk-server/hbbr.error
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

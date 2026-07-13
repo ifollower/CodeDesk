@@ -1,10 +1,13 @@
 [package]
 name = "hbbs"
 version = "1.1.15"
-authors = ["rustdesk <info@rustdesk.com>"]
+authors = ["CodeDesk Contributors"]
 edition = "2021"
+rust-version = "1.85"
 build = "build.rs"
 default-run = "hbbs"
+description = "CodeDesk self-hosted rendezvous and relay server"
+license = "AGPL-3.0"
 
 [[bin]]
 name = "hbbr"
@@ -17,7 +20,7 @@ path = "src/utils.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hbb_common = { path = "libs/hbb_common" }
+hbb_common = { path = "../libs/hbb_common" }
 serde_derive = "1.0"
 serde = "1.0"
 serde_json = "1.0"
@@ -53,18 +56,10 @@ dns-lookup = "1.0.8"
 ping = "0.4.0"
 flate2 = "1.0"
 
-[target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
-# https://github.com/rustdesk/rustdesk-server-pro/issues/189, using native-tls for better tls support
-reqwest = { git = "https://github.com/rustdesk-org/reqwest", features = ["blocking", "socks", "json", "native-tls", "gzip"], default-features=false }
-
-[target.'cfg(not(any(target_os = "macos", target_os = "windows")))'.dependencies]
-reqwest = { git = "https://github.com/rustdesk-org/reqwest", features = ["blocking", "socks", "json", "rustls-tls", "rustls-tls-native-roots", "gzip"], default-features=false }
-
 [build-dependencies]
-hbb_common = { path = "libs/hbb_common" }
+hbb_common = { path = "../libs/hbb_common" }
 
 [workspace]
-members = ["libs/hbb_common"]
 exclude = ["ui"]
 
 #https://github.com/johnthagen/min-sized-rust

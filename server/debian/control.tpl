@@ -1,27 +1,25 @@
-Source: rustdesk-server
+Source: codedesk-server
 Section: net
 Priority: optional
-Maintainer: open-trade <info@rustdesk.com>
-Build-Depends: debhelper (>= 10), pkg-config
+Maintainer: CodeDesk Contributors
+Build-Depends: debhelper (>= 10), cargo, rustc, pkg-config, libssl-dev, libsodium-dev
 Standards-Version: 4.5.0
-Homepage: https://rustdesk.com/
+Rules-Requires-Root: no
 
-Package: rustdesk-server-hbbs
+Package: codedesk-server-hbbs
 Architecture: {{ ARCH }}
 Depends: systemd ${misc:Depends}
-Description: RustDesk server
- Self-host your own RustDesk server, it is free and open source.
+Description: CodeDesk rendezvous server
+ Self-host the CodeDesk ID/rendezvous and NAT traversal coordination service.
 
-Package: rustdesk-server-hbbr
+Package: codedesk-server-hbbr
 Architecture: {{ ARCH }}
 Depends: systemd ${misc:Depends}
-Description: RustDesk server
- Self-host your own RustDesk server, it is free and open source.
- This package contains the RustDesk relay server.
+Description: CodeDesk relay server
+ Self-host the CodeDesk relay service.
 
-Package: rustdesk-server-utils
+Package: codedesk-server-utils
 Architecture: {{ ARCH }}
 Depends: ${misc:Depends}
-Description: RustDesk server
- Self-host your own RustDesk server, it is free and open source.
- This package contains the rustdesk-utils binary.
+Description: CodeDesk server utilities
+ Administration utilities for a self-hosted CodeDesk server.

@@ -2,5 +2,8 @@
 %:
 	dh $@
 
+override_dh_auto_build:
+	DATABASE_URL=sqlite://./db_v2.sqlite3 cargo build --manifest-path server/Cargo.toml --locked --release --bins
+
 override_dh_builddeb:
 	dh_builddeb -- -Zgzip

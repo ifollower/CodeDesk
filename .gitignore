@@ -1,5 +1,6 @@
 /build
 /target
+/server/target
 .vscode
 .idea
 .DS_Store

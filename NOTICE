@@ -1,0 +1,50 @@
+CodeDesk Third-Party Notices
+================================
+
+CodeDesk is an independent project based on open-source software. It is not
+affiliated with, endorsed by, or officially partnered with the RustDesk project
+or its commercial entities.
+
+RustDesk client
+---------------
+
+This repository contains source code derived from the RustDesk client:
+
+  Project: RustDesk
+  Source: https://github.com/rustdesk/rustdesk
+  License: GNU Affero General Public License, version 3
+
+Copyright notices present in the imported source remain the property of their
+respective authors and contributors. CodeDesk Contributors do not claim
+original authorship of that imported code.
+
+RustDesk Server OSS
+-------------------
+
+The server/ directory contains source code derived from RustDesk Server OSS:
+
+  Project: RustDesk Server OSS
+  Source: https://github.com/rustdesk/rustdesk-server
+  License: GNU Affero General Public License, version 3
+
+The former client and server copies of hbb_common were consolidated into the
+single ordinary directory libs/hbb_common. CodeDesk does not maintain this as a
+submodule and does not maintain an automated upstream synchronization relation.
+
+Other third-party components
+----------------------------
+
+The repository also includes or depends on third-party libraries whose license
+and copyright notices are kept in their source directories, package metadata,
+lockfiles, generated license views, or distributed artifacts. Those components
+remain governed by their own licenses. Examples include the code under libs/ and
+the Rust, Flutter/Dart, native, and packaging dependencies declared by this
+repository.
+
+CodeDesk changes
+----------------
+
+New and modified CodeDesk work is attributed to CodeDesk Contributors and is
+licensed under the repository's GNU AGPL-3.0 terms unless a file explicitly
+states otherwise. Nothing in this notice removes or replaces an existing
+copyright or license notice.

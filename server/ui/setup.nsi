@@ -11,10 +11,10 @@
 ####################################################################
 # File Info
 
-!define APP_NAME "RustDeskServer"
-!define PRODUCT_NAME "rustdesk_server"
+!define APP_NAME "CodeDeskServer"
+!define PRODUCT_NAME "codedesk_server"
 !define PRODUCT_DESCRIPTION "Installer for ${PRODUCT_NAME}"
-!define COPYRIGHT "Copyright © 2021"
+!define COPYRIGHT "Copyright © RustDesk Server contributors and CodeDesk Contributors"
 !define VERSION "1.1.15"
 
 VIProductVersion "${VERSION}.0"
@@ -129,8 +129,8 @@ InstallDir "$PROGRAMFILES64\${APP_NAME}"
 
 Section "Install"
   SetShellVarContext all
-  nsExec::Exec 'sc stop hbbr'
-  nsExec::Exec 'sc stop hbbs'
+  nsExec::Exec 'sc stop codedesk-hbbr'
+  nsExec::Exec 'sc stop codedesk-hbbs'
   nsExec::Exec 'taskkill /F /IM ${PRODUCT_NAME}.exe'
   Sleep 500
 
@@ -152,16 +152,16 @@ SectionEnd
 
 Section "Uninstall"
   SetShellVarContext all
-  nsExec::Exec 'sc stop hbbr'
-  nsExec::Exec 'sc stop hbbs'
+  nsExec::Exec 'sc stop codedesk-hbbr'
+  nsExec::Exec 'sc stop codedesk-hbbs'
   nsExec::Exec 'taskkill /F /IM ${PRODUCT_NAME}.exe'
   Sleep 500
 
   RMDir /r "$SMPROGRAMS\${APP_NAME}"
   Delete "$SMSTARTUP\${APP_NAME}.lnk"
   Delete "$DESKTOP\${APP_NAME}.lnk"
-  nsExec::Exec 'sc delete hbbr'
-  nsExec::Exec 'sc delete hbbs'
+  nsExec::Exec 'sc delete codedesk-hbbr'
+  nsExec::Exec 'sc delete codedesk-hbbs'
   nsExec::Exec 'netsh advfirewall firewall delete rule name="${APP_NAME}"'
   RMDir /r "$INSTDIR\bin"
   RMDir /r "$INSTDIR\logs"

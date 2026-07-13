@@ -1,0 +1,19 @@
+[Desktop Entry]
+Name=CodeDesk
+GenericName=Remote Workspace
+Comment=Open-source remote workspace for development machines
+Exec=codedesk %u
+Icon=codedesk
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Network;RemoteAccess;Development;GTK;
+Keywords=remote-control;remote-desktop;terminal;development;coding;
+Actions=new-window;
+StartupWMClass=codedesk
+
+X-Desktop-File-Install-Version=0.23
+
+[Desktop Action new-window]
+Name=Open a New Window
+Exec=codedesk %u

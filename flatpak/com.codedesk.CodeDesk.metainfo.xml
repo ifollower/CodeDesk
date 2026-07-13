@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.codedesk.CodeDesk</id>
+  <developer id="com.codedesk">
+    <name>CodeDesk Contributors</name>
+  </developer>
+  <launchable type="desktop-id">com.codedesk.CodeDesk.desktop</launchable>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-only</project_license>
+  <name>CodeDesk</name>
+  <summary>Open-source remote workspace for development machines</summary>
+  <description>
+    <p>
+        CodeDesk is an independent open-source remote workspace based on the open-source RustDesk client and RustDesk Server OSS projects.
+    </p>
+    <ul>
+      <li>Control Windows, macOS, and Linux development machines from desktop or mobile devices.</li>
+      <li>Use remote desktop, file transfer, clipboard, port forwarding, and persistent terminal capabilities.</li>
+      <li>Self-host the rendezvous and relay services.</li>
+    </ul>
+    <p>
+        Coding Workspace and AI coding workflow integrations are planned and are not part of the current baseline.
+    </p>
+  </description>
+  <categories>
+    <category>Utility</category>
+  </categories>
+  <branding>
+    <color type="primary" scheme_preference="light">#d9eaf8</color>
+    <color type="primary" scheme_preference="dark">#0160ee</color>
+  </branding>
+  <requires>
+    <display_length compare="ge">600</display_length>
+    <internet>always</internet>
+  </requires>
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+  <content_rating type="oars-1.1"/>
+</component>

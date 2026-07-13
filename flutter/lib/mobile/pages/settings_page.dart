@@ -8,8 +8,6 @@ import 'package:flutter_hbb/desktop/pages/desktop_setting_page.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../common.dart';
 import '../../common/widgets/dialog.dart';
@@ -35,8 +33,6 @@ class SettingsPage extends StatefulWidget implements PageShape {
   @override
   State<SettingsPage> createState() => _SettingsState();
 }
-
-const url = 'https://rustdesk.com/';
 
 enum KeepScreenOn {
   never,
@@ -954,16 +950,11 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
           title: Text(translate("About")),
           tiles: [
             SettingsTile(
-                onPressed: (context) async {
-                  await launchUrl(Uri.parse(url));
-                },
+                onPressed: (context) => showCodeDeskLicenses(context),
                 title: Text(translate("Version: ") + version),
                 value: Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text('rustdesk.com',
-                      style: TextStyle(
-                        decoration: TextDecoration.underline,
-                      )),
+                  child: Text(bind.mainGetAppNameSync()),
                 ),
                 leading: Icon(Icons.info)),
             SettingsTile(
@@ -984,10 +975,19 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
                   leading: Icon(Icons.fingerprint)),
             SettingsTile(
               title: Text(translate("Privacy Statement")),
-              onPressed: (context) =>
-                  launchUrlString('https://rustdesk.com/privacy.html'),
+              onPressed: (context) => showCodeDeskPrivacy(context),
               leading: Icon(Icons.privacy_tip),
-            )
+            ),
+            SettingsTile(
+              title: Text('Source code'),
+              onPressed: (context) => openCodeDeskSource(context),
+              leading: Icon(Icons.code),
+            ),
+            SettingsTile(
+              title: Text('Open-source licenses'),
+              onPressed: (context) => showCodeDeskLicenses(context),
+              leading: Icon(Icons.description),
+            ),
           ],
         ),
       ],
@@ -1093,23 +1093,20 @@ void showThemeSettings(OverlayDialogManager dialogManager) async {
 void showAbout(OverlayDialogManager dialogManager) {
   dialogManager.show((setState, close, context) {
     return CustomAlertDialog(
-      title: Text(translate('About RustDesk')),
+      title: Text('${translate('About')} ${bind.mainGetAppNameSync()}'),
       content: Wrap(direction: Axis.vertical, spacing: 12, children: [
         Text('Version: $version'),
-        InkWell(
-            onTap: () async {
-              const url = 'https://rustdesk.com/';
-              await launchUrl(Uri.parse(url));
-            },
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('rustdesk.com',
-                  style: TextStyle(
-                    decoration: TextDecoration.underline,
-                  )),
-            )),
+        const SizedBox(
+            width: 320, child: Text(codeDeskAttribution)),
       ]),
-      actions: [],
+      actions: [
+        TextButton(
+            onPressed: () => openCodeDeskSource(context),
+            child: const Text('Source code')),
+        TextButton(
+            onPressed: () => showCodeDeskLicenses(context),
+            child: const Text('Licenses')),
+      ],
     );
   }, clickMaskDismiss: true, backDismiss: true);
 }

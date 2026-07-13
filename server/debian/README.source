@@ -1,62 +1,15 @@
-#
-# Juli Augustus 2025 was building the downloadable Debian packages done
-# by github.com CI, meaning you being depended on github.com
-# for getting a .deb of the libre source code (four GNU freedoms) you have.
-#
-# And in those days there was no official Debian package.
-#
-# What follows are instructions that make it possible to do
-# a succesfull
-#
-#   debuild -uc -us
-#
-# in the directory  target/rustdesk-server
-#
-# The instructions are written in bash syntax,
-#
-#   bash debian/README.source
-#
-# should help you immens
-#
+CodeDesk Server Debian source package
+=====================================
 
-# Make sure the submodules are present
-git submodule update --init --recursive
+Build from the root of a fresh, ordinary CodeDesk clone. No submodule checkout
+or repository-external hbb_common source is required.
 
-rm -rf target/rustdesk-server  # avoid clutter from previous iteration
-mkdir -p target/rustdesk-server #  FYI: target/ is ignored by git
+    server/debian/build.sh
 
-tar cf - \
-    --exclude .git \
-    Cargo.toml Cargo.lock \
-	LICENSE README.md \
-    db_v2.sqlite3 \
-	build.rs \
-	debian \
-	libs rcd src \
-    systemd ui \
-| ( cd target/rustdesk-server && tar x )
+The script creates a disposable source tree under target/debian containing
+server/, libs/hbb_common/, and the Debian metadata, then runs dpkg-buildpackage.
+The Cargo build is always invoked with server/Cargo.toml and server/Cargo.lock.
 
-mv target/rustdesk-server/debian/Makefile target/rustdesk-server/
-
-tar cjf target/rustdesk-server-orig.tar.xz \
-    --strip-components=1 \
-    target/rustdesk-server
-
-# an .orig.tar.xz tarball exists, 
-# work on the debian directory 
-
-eval $( dpkg-architecture )
-sed -e "s/{{ ARCH }}/${DEB_TARGET_ARCH}/" \
-    debian/control.tpl > target/rustdesk-server/debian/control
-    
-
-cd target/rustdesk-server
-dpkg-checkbuilddeps || echo sudo apt install dpkg-dev
-debuild -uc -us
-
-#
-# For what it is worth:
-# Early September 2025 there were
-# several WARNINGS and ERRORS from Lintian
-#
-# l l
+Required tools include dpkg-dev, debhelper, cargo, rustc, pkg-config,
+libssl-dev, and libsodium-dev. Generated packages are written under
+target/debian/.

@@ -1,35 +1,40 @@
-# RustDesk Server Program
+# CodeDesk Server
 
-[![build](https://github.com/rustdesk/rustdesk-server/actions/workflows/build.yaml/badge.svg)](https://github.com/rustdesk/rustdesk-server/actions/workflows/build.yaml)
+This directory contains CodeDesk's self-hostable ID/rendezvous server (`hbbs`), relay server (`hbbr`), and server utilities. It is derived from RustDesk Server OSS and remains licensed under GNU AGPL-3.0; see [../NOTICE](../NOTICE) and [LICENSE](LICENSE).
 
-[**Download**](https://github.com/rustdesk/rustdesk-server/releases)
+CodeDesk Server is part of the independent CodeDesk repository and is not an official RustDesk service or product.
 
-[**Manual**](https://rustdesk.com/docs/en/self-host/)
+## Shared source
 
-[**FAQ**](https://github.com/rustdesk/rustdesk/wiki/FAQ)
+The server uses the repository's only `hbb_common` source at `../libs/hbb_common`. The server remains a separate Cargo workspace with its own lockfile. No submodule checkout is required.
 
-[**How to migrate OSS to Pro**](https://rustdesk.com/docs/en/self-host/rustdesk-server-pro/installscript/#convert-from-open-source)
+## Build
 
-Self-host your own RustDesk server, it is free and open source.
-
-## How to build manually
+Run from the CodeDesk repository root:
 
 ```bash
-cargo build --release
+DATABASE_URL=sqlite://./db_v2.sqlite3 \
+  cargo build --manifest-path server/Cargo.toml --locked --release --bins
 ```
 
-Three executables will be generated in target/release.
+Generated binaries are placed in `server/target/release/`:
 
-- hbbs - RustDesk ID/Rendezvous server
-- hbbr - RustDesk relay server
-- rustdesk-utils - RustDesk CLI utilities
+- `hbbs` — ID/rendezvous and NAT traversal coordination
+- `hbbr` — relay service
+- `rustdesk-utils` — inherited server administration utilities
 
-You can find updated binaries on the [Releases](https://github.com/rustdesk/rustdesk-server/releases) page.
+The binary names are currently retained for deployment and protocol compatibility.
 
-If you want extra features, [RustDesk Server Pro](https://rustdesk.com/pricing.html) might suit you better.
+## Containers and packages
 
-If you want to develop your own server, [rustdesk-server-demo](https://github.com/rustdesk/rustdesk-server-demo) might be a better and simpler start for you than this repo.
+Docker and Debian jobs must use a full CodeDesk clone. For Docker, use the repository root as context:
 
-## Installation
+```bash
+docker build -f server/docker/Dockerfile -t codedesk-server .
+```
 
-Please follow this [doc](https://rustdesk.com/docs/en/self-host/rustdesk-server-oss/)
+Using `server/` alone as the context will omit the shared library and is unsupported.
+
+## Security boundary
+
+The server coordinates remote connectivity. Planned AI coding features must not turn it into a model proxy or send AI API keys, source files, or terminal content to rendezvous/relay infrastructure.

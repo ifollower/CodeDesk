@@ -1,0 +1,2 @@
+server/target/release/hbbs usr/bin
+server/systemd/codedesk-hbbs.service lib/systemd/system

@@ -1,0 +1,63 @@
+name: CodeDesk CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  DATABASE_URL: sqlite://./db_v2.sqlite3
+
+jobs:
+  repository-layout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify standalone source layout
+        shell: bash
+        run: |
+          test ! -e .gitmodules
+          test ! -e server/libs/hbb_common
+          test -f libs/hbb_common/Cargo.toml
+          grep -F 'hbb_common = { path = "../libs/hbb_common" }' server/Cargo.toml
+
+  shared-common:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install native build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libx11-dev libssl-dev libsodium-dev pkg-config
+      - name: Test shared hbb_common
+        run: cargo test -p hbb_common --locked
+
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install native build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev libsodium-dev pkg-config
+      - name: Test server workspace
+        run: cargo test --manifest-path server/Cargo.toml --locked
+      - name: Build all server tools
+        run: cargo build --manifest-path server/Cargo.toml --locked --release --bins
+
+  protobuf-compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: bufbuild/buf-action@v1
+        with:
+          version: "1.71.0"
+          setup_only: true
+      - name: Build schemas
+        run: buf build libs/hbb_common/protos
+      - name: Reject breaking protocol changes
+        run: buf breaking libs/hbb_common/protos --against '.git#tag=codedesk-baseline-v0,subdir=libs/hbb_common/protos'

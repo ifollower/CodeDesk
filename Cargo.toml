@@ -1,12 +1,12 @@
 [package]
-name = "rustdesk"
+name = "codedesk"
 version = "1.4.9"
-authors = ["rustdesk <info@rustdesk.com>"]
+authors = ["CodeDesk Contributors"]
 edition = "2021"
 build= "build.rs"
-description = "RustDesk Remote Desktop"
-default-run = "rustdesk"
-rust-version = "1.75"
+description = "CodeDesk open-source remote workspace"
+default-run = "codedesk"
+rust-version = "1.87"
 
 [lib]
 name = "librustdesk"
@@ -202,7 +202,9 @@ android-wakelock = { git = "https://github.com/rustdesk-org/android-wakelock" }
 
 [workspace]
 members = ["libs/scrap", "libs/hbb_common", "libs/enigo", "libs/clipboard", "libs/virtual_display", "libs/virtual_display/dylib", "libs/portable", "libs/remote_printer"]
-exclude = ["vdi/host", "examples/custom_plugin"]
+# The rendezvous/relay server remains an independent Cargo workspace with its
+# own lockfile and release profile, while sharing libs/hbb_common by path.
+exclude = ["server", "server/ui", "vdi/host", "examples/custom_plugin"]
 
 # Patch libxdo-sys to use a stub implementation that doesn't require libxdo
 # This allows building and running on systems without libxdo installed (e.g., Wayland-only)
@@ -210,10 +212,10 @@ exclude = ["vdi/host", "examples/custom_plugin"]
 libxdo-sys = { path = "libs/libxdo-sys-stub" }
 
 [package.metadata.winres]
-LegalCopyright = "Copyright © 2026 Purslane Tech Pte. Ltd. All rights reserved."
-ProductName = "RustDesk"
-FileDescription = "RustDesk Remote Desktop"
-OriginalFilename = "rustdesk.exe"
+LegalCopyright = "Copyright © RustDesk contributors and CodeDesk contributors."
+ProductName = "CodeDesk"
+FileDescription = "CodeDesk Remote Workspace"
+OriginalFilename = "codedesk.exe"
 
 [target.'cfg(target_os="windows")'.build-dependencies]
 winres = "0.1"
@@ -229,8 +231,8 @@ hound = "3.5"
 docopt = "1.1"
 
 [package.metadata.bundle]
-name = "RustDesk"
-identifier = "com.carriez.rustdesk"
+name = "CodeDesk"
+identifier = "com.codedesk.remote"
 icon = ["res/32x32.png", "res/128x128.png", "res/128x128@2x.png"]
 osx_minimum_system_version = "10.14"
 

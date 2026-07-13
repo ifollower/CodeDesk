@@ -1,0 +1,71 @@
+name: Bug report
+description: Report a reproducible CodeDesk defect
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report security vulnerabilities here. Follow SECURITY.md instead, and remove credentials, server keys, device IDs, source code, and terminal content from logs.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: e.g. commit SHA or 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Client desktop UI
+        - Client mobile UI
+        - Remote desktop/input/media
+        - File transfer/clipboard
+        - Remote terminal/port forwarding
+        - hbbs/hbbr/server utilities
+        - Build/package/install
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: platforms
+    attributes:
+      label: Controller and controlled platforms
+      placeholder: e.g. Android 16 -> macOS 15
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Include the smallest repeatable sequence and relevant self-hosted/direct/relay setup.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs or screenshots
+      description: Remove secrets, personal data, source code, terminal content, public IPs, and device IDs.
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmation
+      options:
+        - label: I searched existing issues for this problem.
+          required: true
+        - label: I removed sensitive information from this report.
+          required: true

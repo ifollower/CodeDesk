@@ -1,7 +1,9 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: rustdesk-server
+Upstream-Name: CodeDesk Server
+Source: CodeDesk repository; derived from https://github.com/rustdesk/rustdesk-server
 Files: *
-Copyright: Copyright 2022 open-trade <info@rustdesk.com>
+Copyright: Copyright 2022 open-trade and RustDesk Server contributors
+ Copyright 2026 CodeDesk Contributors
 License: AGPL-3.0
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by

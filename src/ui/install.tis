@@ -50,7 +50,7 @@ class Install: Reactor.Component {
     }
 
     event click $(#agreement) {
-        view.open_url("http://rustdesk.com/privacy");
+        view.msgbox(#information, "CodeDesk", "CodeDesk is distributed under AGPL-3.0. See LICENSE, NOTICE, and PRIVACY.md in the source repository.");
     }
 
     event click $(#submit) {
