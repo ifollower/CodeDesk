@@ -8,6 +8,6 @@ CodeDesk is designed as a self-hostable remote workspace.
 - Builds must clearly disclose the rendezvous, relay, update, and telemetry services they use.
 - Public CodeDesk binaries must default to CodeDesk-controlled or user-configured infrastructure, not RustDesk public services.
 
-The independent baseline currently preserves inherited connection defaults for compatibility testing. It is not a public-release privacy configuration. See [README.md](README.md#server-policy-during-the-baseline-phase).
+The repository defaults leave vendor rendezvous, API, update, documentation, and privacy endpoints empty. A build distributor must configure and disclose any hosted services it enables. User-configured self-hosted servers continue to take precedence over build defaults.
 
 Before collecting telemetry or operating a hosted service, the project must publish a service-specific privacy notice covering data categories, purpose, retention, processors, user controls, and contact details. This repository policy does not substitute for such a notice.

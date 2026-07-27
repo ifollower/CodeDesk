@@ -1054,6 +1054,10 @@ pub fn deploy_device(token: String, new_id: Option<String>) -> DeployResult {
     if token.is_empty() {
         return DeployResult::Error("token is required!".to_owned());
     }
+    let api_server = get_api_server();
+    if api_server.is_empty() {
+        return DeployResult::Error("CodeDesk API is not configured".to_owned());
+    }
     #[cfg(any(target_os = "android", target_os = "ios"))]
     let local_id = Config::get_id();
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
@@ -1067,7 +1071,7 @@ pub fn deploy_device(token: String, new_id: Option<String>) -> DeployResult {
         "pk": pk,
     });
     let header = "Authorization: Bearer ".to_owned() + token;
-    let url = get_api_server() + "/api/devices/deploy";
+    let url = api_server + "/api/devices/deploy";
     let text = match crate::post_request_sync(url, body.to_string(), &header) {
         Ok(text) => text,
         Err(err) => return DeployResult::Error(format!("Request failed: {}", err)),
@@ -1255,7 +1259,11 @@ fn check_connect_status(reconnect: bool) -> mpsc::UnboundedSender<ipc::Data> {
 
 #[cfg(feature = "flutter")]
 pub fn account_auth(op: String, id: String, uuid: String, remember_me: bool) {
-    account::OidcSession::account_auth(get_api_server(), op, id, uuid, remember_me);
+    let api_server = get_api_server();
+    if api_server.is_empty() {
+        return;
+    }
+    account::OidcSession::account_auth(api_server, op, id, uuid, remember_me);
 }
 
 #[cfg(feature = "flutter")]

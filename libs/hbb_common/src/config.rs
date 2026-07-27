@@ -97,10 +97,9 @@ lazy_static::lazy_static! {
     pub static ref APP_HOME_DIR: RwLock<String> = Default::default();
 }
 
-pub const LINK_DOCS_HOME: &str = "https://rustdesk.com/docs/en/";
-pub const LINK_DOCS_X11_REQUIRED: &str = "https://rustdesk.com/docs/en/manual/linux/#x11-required";
-pub const LINK_HEADLESS_LINUX_SUPPORT: &str =
-    "https://github.com/rustdesk/rustdesk/wiki/Headless-Linux-Support";
+pub const LINK_DOCS_HOME: &str = crate::build_config::DOCS_URL;
+pub const LINK_DOCS_X11_REQUIRED: &str = crate::build_config::DOCS_X11_URL;
+pub const LINK_HEADLESS_LINUX_SUPPORT: &str = crate::build_config::DOCS_HEADLESS_URL;
 
 lazy_static::lazy_static! {
     pub static ref HELPER_URL: HashMap<&'static str, &'static str> = HashMap::from([
@@ -117,8 +116,7 @@ const CHARS: &[char] = &[
     'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
 
-pub const RENDEZVOUS_SERVERS: &[&str] = &["rs-ny.rustdesk.com"];
-pub const RS_PUB_KEY: &str = "OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=";
+pub const RS_PUB_KEY: &str = crate::build_config::RENDEZVOUS_PUBLIC_KEY;
 
 pub const RENDEZVOUS_PORT: i32 = 21116;
 pub const RELAY_PORT: i32 = 21117;
@@ -919,13 +917,25 @@ impl Config {
             rendezvous_server = PROD_RENDEZVOUS_SERVER.read().unwrap().clone();
         }
         if rendezvous_server.is_empty() {
-            rendezvous_server = CONFIG2.read().unwrap().rendezvous_server.clone();
+            let cached_server = CONFIG2.read().unwrap().rendezvous_server.clone();
+            let defaults = crate::build_config::rendezvous_servers();
+            if !is_inherited_public_server(&cached_server)
+                && defaults.iter().any(|default_server| {
+                    crate::socket_client::check_port(default_server, RENDEZVOUS_PORT)
+                        == crate::socket_client::check_port(&cached_server, RENDEZVOUS_PORT)
+                })
+            {
+                rendezvous_server = cached_server;
+            }
         }
         if rendezvous_server.is_empty() {
             rendezvous_server = Self::get_rendezvous_servers()
                 .drain(..)
                 .next()
                 .unwrap_or_default();
+        }
+        if rendezvous_server.is_empty() {
+            return rendezvous_server;
         }
         if !rendezvous_server.contains(':') {
             rendezvous_server = format!("{rendezvous_server}:{RENDEZVOUS_PORT}");
@@ -946,18 +956,19 @@ impl Config {
         if !s.is_empty() {
             return vec![s];
         }
+        let build_servers = crate::build_config::rendezvous_servers();
         let serial_obsolute = CONFIG2.read().unwrap().serial > SERIAL;
-        if serial_obsolute {
+        if serial_obsolute && !build_servers.is_empty() {
             let ss: Vec<String> = Self::get_option("rendezvous-servers")
                 .split(',')
-                .filter(|x| x.contains('.'))
+                .filter(|x| x.contains('.') && !is_inherited_public_server(x))
                 .map(|x| x.to_owned())
                 .collect();
             if !ss.is_empty() {
                 return ss;
             }
         }
-        return RENDEZVOUS_SERVERS.iter().map(|x| x.to_string()).collect();
+        build_servers
     }
 
     pub fn reset_online() {
@@ -1696,6 +1707,35 @@ impl Config {
         } else {
             path.with_extension("toml")
         }
+    }
+}
+
+fn is_inherited_public_server(server: &str) -> bool {
+    let host = server
+        .trim()
+        .trim_start_matches("http://")
+        .trim_start_matches("https://")
+        .split('/')
+        .next()
+        .unwrap_or_default()
+        .split(':')
+        .next()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    host == "rustdesk.com" || host.ends_with(".rustdesk.com")
+}
+
+#[cfg(test)]
+mod build_server_tests {
+    #[test]
+    fn inherited_rustdesk_hosts_are_not_reused_as_defaults() {
+        assert!(super::is_inherited_public_server(
+            "rs-ny.rustdesk.com:21116"
+        ));
+        assert!(super::is_inherited_public_server(
+            "https://api.rustdesk.com/path"
+        ));
+        assert!(!super::is_inherited_public_server("id.example.com:21116"));
     }
 }
 
@@ -2815,7 +2855,12 @@ pub fn is_disable_ab() -> bool {
 
 #[inline]
 pub fn is_disable_account() -> bool {
-    is_some_hard_opton("disable-account")
+    let has_api_server = !crate::build_config::API_URL.is_empty()
+        || !Config::get_option("api-server").trim().is_empty()
+        || !Config::get_option("custom-rendezvous-server")
+            .trim()
+            .is_empty();
+    !has_api_server || is_some_hard_opton("disable-account")
 }
 
 #[inline]

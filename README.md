@@ -49,21 +49,20 @@ Prerequisites vary by target platform. The canonical commands are run from the r
 
 ```bash
 # Shared library
-cargo test -p hbb_common --locked
+make test-common
 
 # Client (additional native/Flutter prerequisites are required)
-cargo build --locked
+make build-client
 
 # Server workspace
-DATABASE_URL=sqlite://./db_v2.sqlite3 \
-  cargo build --manifest-path server/Cargo.toml --locked --release --bins
+make build-server
 ```
 
 Read [docs/BUILDING.md](docs/BUILDING.md) before building packages or container images.
 
-## Server policy during the baseline phase
+## Network defaults
 
-The current development baseline deliberately preserves the existing connection behavior while repository integration and coexistence work are verified. A public CodeDesk release must provide self-hosted-server onboarding and remove default dependencies on RustDesk public rendezvous, update, and privacy endpoints. Do not treat the current development defaults as a production release configuration.
+CodeDesk does not embed RustDesk public rendezvous, update, API, documentation, or privacy endpoints. Development builds work with empty vendor defaults and require the user to configure an ID Server. Distributors provide CodeDesk-controlled public defaults at build time through the root `.env`; see [`.env.example`](.env.example) and the [build guide](docs/BUILDING.md#codedesk-build-configuration).
 
 ## Security and responsible use
 

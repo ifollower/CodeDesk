@@ -168,7 +168,9 @@ class _OnlineStatusWidgetState extends State<OnlineStatusWidget> {
           : stateGlobal.svcStatus.value == SvcStatus.connecting
               ? translate("connecting_status")
               : stateGlobal.svcStatus.value == SvcStatus.notReady
-                  ? translate("not_ready_status")
+                  ? (codeDeskHasConfiguredIdServer()
+                      ? translate("not_ready_status")
+                      : 'ID Server is not configured. Open Settings to add one.')
                   : translate('Ready'),
       style: TextStyle(fontSize: em),
     );

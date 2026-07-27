@@ -142,15 +142,14 @@ fn check_update(manually: bool) -> ResultType<()> {
                     std::env::consts::ARCH
                 );
             };
-            format!(
-                "{}/rustdesk-{}-{}.{}",
-                download_url,
-                version,
-                arch,
-                if update_msi { "msi" } else { "exe" }
-            )
+            let file_name = if update_msi {
+                format!("codedesk-{version}-windows-{arch}.msi")
+            } else {
+                format!("codedesk-{version}-windows-{arch}-install.exe")
+            };
+            format!("{download_url}/{file_name}")
         } else {
-            format!("{}/rustdesk-{}-x86-sciter.exe", download_url, version)
+            format!("{download_url}/codedesk-{version}-windows-x86-sciter-install.exe")
         };
         log::debug!("New version available: {}", &version);
         let client = create_http_client_with_url(&download_url);

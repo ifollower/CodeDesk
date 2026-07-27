@@ -288,7 +288,7 @@ pub fn core_main() -> Option<Vec<String>> {
                 #[cfg(windows)]
                 if crate::virtual_display_manager::is_virtual_display_supported() {
                     hbb_common::allow_err!(
-                        crate::virtual_display_manager::rustdesk_idd::install_update_driver()
+                        crate::virtual_display_manager::codedesk_idd::install_update_driver()
                     );
                 }
                 return None;
@@ -620,7 +620,12 @@ pub fn core_main() -> Option<Vec<String>> {
                         if let Some(name) = device_name {
                             body["device_name"] = serde_json::json!(name);
                         }
-                        let url = crate::ui_interface::get_api_server() + "/api/devices/cli";
+                        let api_server = crate::ui_interface::get_api_server();
+                        if api_server.is_empty() {
+                            println!("CodeDesk API is not configured");
+                            return None;
+                        }
+                        let url = api_server + "/api/devices/cli";
                         match crate::post_request_sync(url, body.to_string(), &header) {
                             Err(err) => println!("{}", err),
                             Ok(text) => {

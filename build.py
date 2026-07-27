@@ -8,6 +8,8 @@ import urllib.request
 import shutil
 import hashlib
 import argparse
+import shlex
+import subprocess
 import sys
 from pathlib import Path
 
@@ -25,6 +27,28 @@ else:
     flutter_build_dir = 'build/linux/x64/release/bundle/'
 flutter_build_dir_2 = f'flutter/{flutter_build_dir}'
 skip_cargo = False
+python_cmd = os.environ.get('PYTHON', 'python3')
+flutter_cmd = os.environ.get('FLUTTER', 'flutter')
+flutter_version = '3.24.5'
+flutter_rust_bridge_codegen_version = '1.80.1'
+CODEDESK_BUILD_KEYS = (
+    'CODEDESK_SOURCE_URL',
+    'CODEDESK_ISSUES_URL',
+    'CODEDESK_WEBSITE_URL',
+    'CODEDESK_DOWNLOAD_URL',
+    'CODEDESK_PRIVACY_URL',
+    'CODEDESK_DOCS_URL',
+    'CODEDESK_DOCS_MOBILE_URL',
+    'CODEDESK_DOCS_LINUX_PERMISSIONS_URL',
+    'CODEDESK_DOCS_X11_URL',
+    'CODEDESK_DOCS_LINUX_LOGIN_URL',
+    'CODEDESK_DOCS_HEADLESS_URL',
+    'CODEDESK_DOCS_WHITELIST_URL',
+    'CODEDESK_API_URL',
+    'CODEDESK_UPDATE_API_URL',
+    'CODEDESK_RENDEZVOUS_SERVERS',
+    'CODEDESK_RENDEZVOUS_PUBLIC_KEY',
+)
 
 
 def get_deb_arch() -> str:
@@ -44,6 +68,92 @@ def system2(cmd):
     if exit_code != 0:
         sys.stderr.write(f"Error occurred when executing: `{cmd}`. Exiting.\n")
         sys.exit(-1)
+
+
+def run_command(command, *, cwd=None, env=None):
+    result = subprocess.run(command, cwd=cwd, env=env, check=False)
+    if result.returncode != 0:
+        sys.stderr.write(
+            f"Error occurred when executing: {subprocess.list2cmdline(command)}. Exiting.\n"
+        )
+        sys.exit(-1)
+
+
+def flutter_build_define_args():
+    return [
+        f'--dart-define={key}={os.environ.get(key, "")}'
+        for key in CODEDESK_BUILD_KEYS
+    ]
+
+
+def generate_flutter_bridge():
+    codegen = os.environ.get('FLUTTER_RUST_BRIDGE_CODEGEN')
+    if codegen:
+        codegen_path = Path(codegen).expanduser()
+    else:
+        codegen_path = Path.home() / '.cargo/bin/flutter_rust_bridge_codegen'
+
+    installed_version = ''
+    if codegen_path.is_file():
+        result = subprocess.run(
+            [str(codegen_path), '--version'],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        installed_version = f'{result.stdout} {result.stderr}'
+
+    if flutter_rust_bridge_codegen_version not in installed_version:
+        if codegen:
+            sys.stderr.write(
+                f'{codegen_path} is not flutter_rust_bridge_codegen '
+                f'{flutter_rust_bridge_codegen_version}.\n'
+            )
+            sys.exit(-1)
+        system2(
+            'cargo install flutter_rust_bridge_codegen '
+            f'--version {flutter_rust_bridge_codegen_version} '
+            '--features uuid --locked --force'
+        )
+
+    flutter_path = shutil.which(flutter_cmd)
+    if flutter_path is None:
+        sys.stderr.write(
+            f'Flutter SDK not found: {flutter_cmd}. Install Flutter {flutter_version} '
+            'and make sure its bin directory is in PATH.\n'
+        )
+        sys.exit(-1)
+
+    version_result = subprocess.run(
+        [flutter_path, '--version', '--machine'],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    expected_version = f'"frameworkVersion": "{flutter_version}"'
+    if version_result.returncode != 0 or expected_version not in version_result.stdout:
+        sys.stderr.write(
+            f'Flutter {flutter_version} is required for this project; '
+            f'{flutter_path} reports a different version.\n'
+        )
+        sys.exit(-1)
+
+    run_command([flutter_path, 'pub', 'get'], cwd='flutter')
+    codegen_env = os.environ.copy()
+    codegen_env['PATH'] = os.pathsep.join(
+        [str(Path(flutter_path).parent), codegen_env.get('PATH', '')]
+    )
+    codegen_env['RUST_LOG'] = 'info'
+    run_command(
+        [
+            str(codegen_path),
+            '--rust-input', './src/flutter_ffi.rs',
+            '--dart-output', './flutter/lib/generated_bridge.dart',
+            '--c-output', './flutter/macos/Runner/bridge_generated.h',
+            '--class-name', 'Rustdesk',
+        ],
+        env=codegen_env,
+    )
 
 
 def get_version():
@@ -320,7 +430,9 @@ def build_flutter_deb(version, features):
         system2(f'cargo build --locked --features {features} --lib --release')
         ffi_bindgen_function_refactor()
     os.chdir('flutter')
-    system2('flutter build linux --release')
+    run_command(
+        [flutter_cmd, 'build', 'linux', '--release', *flutter_build_define_args()]
+    )
     system2('mkdir -p tmpdeb/usr/bin/')
     system2('mkdir -p tmpdeb/usr/share/codedesk')
     system2('mkdir -p tmpdeb/etc/codedesk/')
@@ -403,7 +515,7 @@ def build_deb_from_folder(version, binary_folder):
 
 def build_flutter_dmg(version, features):
     if not skip_cargo:
-        # set minimum osx build target, now is 10.14, which is the same as the flutter xcode project
+        # Keep the Rust dylib target aligned with the Flutter macOS project.
         system2(
             f'MACOSX_DEPLOYMENT_TARGET=10.14 cargo build --locked --features {features} --release')
     # copy dylib
@@ -414,14 +526,49 @@ def build_flutter_dmg(version, features):
     # so the universal-by-default ARCHS_STANDARD doesn't try to link a missing slice.
     # FLUTTER_XCODE_* env vars are forwarded to xcodebuild as build settings.
     mac_arch = 'arm64' if platform.machine().lower() in ('arm64', 'aarch64') else 'x86_64'
+    run_command([flutter_cmd, 'clean'])
+    flutter_env = os.environ.copy()
+    flutter_env['FLUTTER_XCODE_ARCHS'] = mac_arch
+    flutter_env['FLUTTER_XCODE_ONLY_ACTIVE_ARCH'] = 'YES'
+    run_command(
+        [flutter_cmd, 'build', 'macos', '--release', *flutter_build_define_args()],
+        env=flutter_env,
+    )
+    app_path = Path('build/macos/Build/Products/Release/CodeDesk.app')
+    system2(f'cp -rf ../target/release/service {shlex.quote(str(app_path / "Contents/MacOS/"))}')
+
+    # Adding the service after Xcode has signed the bundle invalidates the app
+    # seal. Re-sign the complete local package without hardened runtime: an
+    # ad-hoc signature has no Team ID, so library validation would otherwise
+    # reject the bundled Flutter frameworks on launch.
+    entitlements_path = Path('macos/Runner/Release.entitlements')
     system2(
-        f'FLUTTER_XCODE_ARCHS={mac_arch} FLUTTER_XCODE_ONLY_ACTIVE_ARCH=YES flutter build macos --release')
-    system2('cp -rf ../target/release/service ./build/macos/Build/Products/Release/CodeDesk.app/Contents/MacOS/')
-    '''
+        f'codesign --force --deep --sign - '
+        f'--entitlements {shlex.quote(str(entitlements_path))} '
+        f'{shlex.quote(str(app_path))}'
+    )
     system2(
-        "create-dmg --volname \"CodeDesk Installer\" --window-pos 200 120 --window-size 800 400 --icon-size 100 --app-drop-link 600 185 --icon CodeDesk.app 200 190 --hide-extension CodeDesk.app codedesk.dmg ./build/macos/Build/Products/Release/CodeDesk.app")
-    os.rename("codedesk.dmg", f"../codedesk-{version}.dmg")
-    '''
+        f'codesign --verify --deep --strict --verbose=1 '
+        f'{shlex.quote(str(app_path))}'
+    )
+
+    dmg_stage = Path('build/macos/dmg')
+    if dmg_stage.exists():
+        shutil.rmtree(dmg_stage)
+    dmg_stage.mkdir(parents=True)
+    shutil.copytree(app_path, dmg_stage / 'CodeDesk.app', symlinks=True)
+    os.symlink('/Applications', dmg_stage / 'Applications')
+
+    package_dir = Path('../target/packages')
+    package_dir.mkdir(parents=True, exist_ok=True)
+    dmg_path = package_dir / f'codedesk-{version}-macos-{mac_arch}.dmg'
+    if dmg_path.exists():
+        dmg_path.unlink()
+    system2(
+        f'hdiutil create -volname CodeDesk -srcfolder {shlex.quote(str(dmg_stage))} '
+        f'-ov -format UDZO {shlex.quote(str(dmg_path))}'
+    )
+    print(f'output location: {dmg_path.resolve()}')
     os.chdir("..")
 
 
@@ -430,7 +577,9 @@ def build_flutter_arch_manjaro(version, features):
         system2(f'cargo build --locked --features {features} --lib --release')
     ffi_bindgen_function_refactor()
     os.chdir('flutter')
-    system2('flutter build linux --release')
+    run_command(
+        [flutter_cmd, 'build', 'linux', '--release', *flutter_build_define_args()]
+    )
     system2(f'strip {flutter_build_dir}/lib/librustdesk.so')
     os.chdir('../res')
     system2('HBB=`pwd`/.. FLUTTER=1 makepkg -f')
@@ -443,16 +592,24 @@ def build_flutter_windows(version, features, skip_portable_pack):
             print("cargo build failed, please check rust source code.")
             exit(-1)
     os.chdir('flutter')
-    system2('flutter build windows --release')
+    run_command([flutter_cmd, 'clean'])
+    run_command(
+        [flutter_cmd, 'build', 'windows', '--release', *flutter_build_define_args()]
+    )
     os.chdir('..')
     shutil.copy2('target/release/deps/dylib_virtual_display.dll',
                  flutter_build_dir_2)
     if skip_portable_pack:
         return
     os.chdir('libs/portable')
-    system2('pip3 install -r requirements.txt')
-    system2(
-        f'python3 ./generate.py -f ../../{flutter_build_dir_2} -o . -e ../../{flutter_build_dir_2}/codedesk.exe')
+    run_command([python_cmd, '-m', 'pip', 'install', '-r', 'requirements.txt'])
+    run_command([
+        python_cmd,
+        './generate.py',
+        '-f', f'../../{flutter_build_dir_2}',
+        '-o', '.',
+        '-e', f'../../{flutter_build_dir_2}/codedesk.exe',
+    ])
     os.chdir('../..')
     if os.path.exists('./codedesk_portable.exe'):
         os.replace('./target/release/rustdesk-portable-packer.exe',
@@ -460,11 +617,13 @@ def build_flutter_windows(version, features, skip_portable_pack):
     else:
         os.rename('./target/release/rustdesk-portable-packer.exe',
                   './codedesk_portable.exe')
-    print(
-        f'output location: {os.path.abspath(os.curdir)}/codedesk_portable.exe')
-    os.rename('./codedesk_portable.exe', f'./codedesk-{version}-install.exe')
-    print(
-        f'output location: {os.path.abspath(os.curdir)}/codedesk-{version}-install.exe')
+    package_dir = Path('target/packages')
+    package_dir.mkdir(parents=True, exist_ok=True)
+    package_path = package_dir / f'codedesk-{version}-windows-{win_arch}-install.exe'
+    if package_path.exists():
+        package_path.unlink()
+    os.replace('./codedesk_portable.exe', package_path)
+    print(f'output location: {package_path.resolve()}')
 
 
 def main():
@@ -491,6 +650,8 @@ def main():
         return
     res_dir = 'resources'
     external_resources(flutter, args, res_dir)
+    if flutter:
+        generate_flutter_bridge()
     if windows:
         # build virtual display dynamic library
         os.chdir('libs/virtual_display/dylib')

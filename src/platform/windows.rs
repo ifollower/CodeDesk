@@ -3945,8 +3945,8 @@ pub fn is_x64() -> bool {
 
 pub fn release_arch_suffix() -> Option<&'static str> {
     match std::env::consts::ARCH {
-        "x86_64" => Some("x86_64"),
-        "aarch64" => Some("aarch64"),
+        "x86_64" => Some("x64"),
+        "aarch64" => Some("arm64"),
         _ => None,
     }
 }

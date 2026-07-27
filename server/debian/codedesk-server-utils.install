@@ -1,1 +1,1 @@
-server/target/release/rustdesk-utils usr/bin
+server/target/release/codedesk-utils usr/bin

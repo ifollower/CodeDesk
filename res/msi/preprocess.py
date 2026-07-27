@@ -129,7 +129,7 @@ def insert_components_between_tags(lines, index_start, app_name, dist_dir):
 
 def gen_auto_component(app_name, dist_dir):
     return gen_content_between_tags(
-        "Package/Components/RustDesk.wxs",
+        "Package/Components/CodeDesk.wxs",
         "<!--$AutoComonentStart$-->",
         "<!--$AutoComponentEnd$-->",
         lambda lines, index_start: insert_components_between_tags(
@@ -183,9 +183,7 @@ def replace_app_name_in_custom_actions(app_name):
         with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
         for i, line in enumerate(lines):
-            line = re.sub(r"\b(?:RustDesk|CodeDesk)\b", app_name, line)
-            line = line.replace(f"{app_name} v4 Printer Driver", "RustDesk v4 Printer Driver")
-            lines[i] = line
+            lines[i] = re.sub(r"\b(?:RustDesk|CodeDesk)\b", app_name, line)
         with open(file_path, "w", encoding="utf-8") as f:
             f.writelines(lines)
 

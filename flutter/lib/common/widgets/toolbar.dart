@@ -17,13 +17,15 @@ import 'package:url_launcher/url_launcher.dart';
 
 bool isEditOsPassword = false;
 const String kPeerOptionAllowWaylandKeyboard = 'allow-wayland-keyboard';
-const String kWaylandKeyboardIssueUrl =
-    'https://github.com/rustdesk/rustdesk/issues/14586';
 final Set<String> _waylandKeyboardPromptSuppressedConnectionIds = <String>{};
 
 Future<bool> openWaylandKeyboardIssueUrl() {
+  final uri = Uri.tryParse(codeDeskIssuesUrl);
+  if (uri == null || (uri.scheme != 'https' && uri.scheme != 'http')) {
+    return Future.value(false);
+  }
   return launchUrl(
-    Uri.parse(kWaylandKeyboardIssueUrl),
+    uri,
     mode: LaunchMode.externalApplication,
   );
 }
@@ -268,34 +270,36 @@ void showWaylandKeyboardInputWarningDialog(
               ],
             ).marginOnly(bottom: 10),
           ],
-          TextButton(
-            onPressed: consentInProgress
-                ? null
-                : () async {
-                    try {
-                      final opened = await openWaylandKeyboardIssueUrl();
-                      if (!opened) {
-                        // Opening this optional help link almost never fails in
-                        // normal desktop environments. Keep the result handled
-                        // for review hygiene, but avoid a low-value user toast.
-                        debugPrint('Failed to open Wayland keyboard issue URL');
+          if (codeDeskIssuesUrl.isNotEmpty)
+            TextButton(
+              onPressed: consentInProgress
+                  ? null
+                  : () async {
+                      try {
+                        final opened = await openWaylandKeyboardIssueUrl();
+                        if (!opened) {
+                          // Opening this optional help link almost never fails in
+                          // normal desktop environments. Keep the result handled
+                          // for review hygiene, but avoid a low-value user toast.
+                          debugPrint(
+                              'Failed to open Wayland keyboard issue URL');
+                        }
+                      } catch (e) {
+                        debugPrint(
+                            'Failed to open Wayland keyboard issue URL: $e');
                       }
-                    } catch (e) {
-                      debugPrint(
-                          'Failed to open Wayland keyboard issue URL: $e');
-                    }
-                  },
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.blue,
-              padding: EdgeInsets.zero,
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              translate('Why this happens'),
-              style: const TextStyle(decoration: TextDecoration.underline),
-            ),
-          ).marginOnly(bottom: 6),
+                    },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blue,
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                translate('Why this happens'),
+                style: const TextStyle(decoration: TextDecoration.underline),
+              ),
+            ).marginOnly(bottom: 6),
           CheckboxListTile(
             value: remember,
             dense: true,
@@ -1249,7 +1253,7 @@ bool showVirtualDisplayMenu(FFI ffi) {
   if (!ffi.ffiModel.pi.isInstalled) {
     return false;
   }
-  if (ffi.ffiModel.pi.isRustDeskIdd || ffi.ffiModel.pi.isAmyuniIdd) {
+  if (ffi.ffiModel.pi.isCodeDeskIdd || ffi.ffiModel.pi.isAmyuniIdd) {
     return true;
   }
   return false;
@@ -1262,8 +1266,8 @@ List<Widget> getVirtualDisplayMenuChildren(
   }
   final pi = ffi.ffiModel.pi;
   final privacyModeState = PrivacyModeState.find(id);
-  if (pi.isRustDeskIdd) {
-    final virtualDisplays = ffi.ffiModel.pi.RustDeskVirtualDisplays;
+  if (pi.isCodeDeskIdd) {
+    final virtualDisplays = ffi.ffiModel.pi.codeDeskVirtualDisplays;
     final children = <Widget>[];
     for (var i = 0; i < kMaxVirtualDisplayCount; i++) {
       children.add(Obx(() => CkbMenuButton(

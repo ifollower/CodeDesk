@@ -279,8 +279,12 @@ fn request_plugin_sign(id: String, msg_to_rustdesk: MsgToRustDesk) -> PluginRetu
         "parse signature data '{}'",
         signature_data
     );
+    let api_server = get_api_server();
+    if api_server.is_empty() {
+        return PluginReturn::new(errno::ERR_CALLBACK_FAILED, "CodeDesk API is not configured");
+    }
     thread::spawn(move || {
-        let sign_url = format!("{}/lic/web/api/plugin-sign", get_api_server());
+        let sign_url = format!("{api_server}/lic/web/api/plugin-sign");
         let client = create_http_client();
         let req = PluginSignReq {
             plugin_id: id.clone(),

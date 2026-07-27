@@ -983,6 +983,29 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
               onPressed: (context) => openCodeDeskSource(context),
               leading: Icon(Icons.code),
             ),
+            if (codeDeskWebsiteUrl.isNotEmpty)
+              SettingsTile(
+                title: Text('Website'),
+                onPressed: (context) =>
+                    openCodeDeskExternalUrl(codeDeskWebsiteUrl),
+                leading: Icon(Icons.language),
+              ),
+            if (codeDeskDownloadUrl.isNotEmpty)
+              SettingsTile(
+                title: Text(translate('Download')),
+                onPressed: (context) =>
+                    openCodeDeskExternalUrl(codeDeskDownloadUrl),
+                leading: Icon(Icons.download),
+              ),
+            if (codeDeskDocsMobileUrl.isNotEmpty || codeDeskDocsUrl.isNotEmpty)
+              SettingsTile(
+                title: Text('Help'),
+                onPressed: (context) => openCodeDeskExternalUrl(
+                    codeDeskDocsMobileUrl.isNotEmpty
+                        ? codeDeskDocsMobileUrl
+                        : codeDeskDocsUrl),
+                leading: Icon(Icons.help_outline),
+              ),
             SettingsTile(
               title: Text('Open-source licenses'),
               onPressed: (context) => showCodeDeskLicenses(context),

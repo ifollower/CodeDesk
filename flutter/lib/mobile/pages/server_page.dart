@@ -490,7 +490,10 @@ class ServerInfo extends StatelessWidget {
           const Icon(Icons.warning_amber_sharp,
                   color: colorNegative, size: iconSize)
               .marginOnly(right: iconMarginRight),
-          Expanded(child: Text(translate('not_ready_status')))
+          Expanded(
+              child: Text(codeDeskHasConfiguredIdServer()
+                  ? translate('not_ready_status')
+                  : 'ID Server is not configured. Open Settings to add one.'))
         ]);
       } else if (serverModel.connectStatus == 0) {
         return Row(children: [

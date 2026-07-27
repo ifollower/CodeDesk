@@ -17,12 +17,12 @@ typedef struct DeviceCreateCallbackContext
 } DeviceCreateCallbackContext;
 
 const GUID GUID_DEVINTERFACE_IDD_DRIVER_DEVICE = \
-{ 0x781EF630, 0x72B2, 0x11d2, { 0xB8, 0x52,  0x00,  0xC0,  0x4E,  0xAF,  0x52,  0x72 } };
-//{781EF630-72B2-11d2-B852-00C04EAF5272}
+{ 0x380D51A4, 0x5A5F, 0x4D11, { 0x88, 0xE6, 0xC2, 0xCB, 0xFD, 0xF9, 0x2E, 0xB6 } };
+//{380D51A4-5A5F-4D11-88E6-C2CBFDF92EB6}
 
 BOOL g_printMsg = TRUE;
 char g_lastMsg[1024];
-const char* g_msgHeader = "RustDeskIdd: ";
+const char* g_msgHeader = "CodeDeskIdd: ";
 
 VOID WINAPI
 CreationCallback(
@@ -79,7 +79,7 @@ BOOL InstallUpdate(LPCWSTR fullInfPath, PBOOL rebootRequired)
     // UpdateDriverForPlugAndPlayDevicesW may return FALSE while driver was successfully installed...
     if (FALSE == UpdateDriverForPlugAndPlayDevicesW(
         NULL,
-        L"RustDeskIddDriver",    // match hardware id in the inf file
+        L"CodeDeskIddDriver",    // match hardware id in the inf file
         fullInfPath,
         INSTALLFLAG_FORCE
             // | INSTALLFLAG_NONINTERACTIVE  // INSTALLFLAG_NONINTERACTIVE may cause error 0xe0000247
@@ -94,10 +94,10 @@ BOOL InstallUpdate(LPCWSTR fullInfPath, PBOOL rebootRequired)
             switch (error)
             {
             case 0x109:
-                SetLastMsg("Failed InstallUpdate UpdateDriverForPlugAndPlayDevicesW, error: 0x%x, %s  Please try: Reinstall RustDesk with the cert option.\n", error, errorString == NULL ? "(NULL)\n" : errorString);
+                SetLastMsg("Failed InstallUpdate UpdateDriverForPlugAndPlayDevicesW, error: 0x%x, %s  Please try: Reinstall CodeDesk with the driver certificate option.\n", error, errorString == NULL ? "(NULL)\n" : errorString);
                 break;
             case 0xe0000247:
-                SetLastMsg("Failed InstallUpdate UpdateDriverForPlugAndPlayDevicesW, error: 0x%x, %s  Please try: \n1. Check the device manager and event viewer.\n2. Uninstall \"RustDeskIddDriver Device\" in device manager, then reinstall RustDesk with the cert option.\n", error, errorString == NULL ? "(NULL)\n" : errorString);
+                SetLastMsg("Failed InstallUpdate UpdateDriverForPlugAndPlayDevicesW, error: 0x%x, %s  Please try: \n1. Check the device manager and event viewer.\n2. Uninstall \"CodeDeskIddDriver Device\" in device manager, then reinstall CodeDesk with the driver certificate option.\n", error, errorString == NULL ? "(NULL)\n" : errorString);
                 break;
             default:
                 SetLastMsg("Failed InstallUpdate UpdateDriverForPlugAndPlayDevicesW, error: 0x%x, %s  Please try: Check the device manager and event viewer.\n", error, errorString == NULL ? "(NULL)\n" : errorString);
@@ -265,12 +265,12 @@ BOOL DeviceCreateWithLifetime(SW_DEVICE_LIFETIME *lifetime, PHSWDEVICE hSwDevice
     DeviceCreateCallbackContext callbackContext = { hEvent, lifetime, E_FAIL, };
 
     SW_DEVICE_CREATE_INFO createInfo = { 0 };
-    PCWSTR description = L"RustDesk Idd Driver";
+    PCWSTR description = L"CodeDesk Idd Driver";
 
     // These match the Pnp id's in the inf file so OS will load the driver when the device is created
-    PCWSTR instanceId = L"RustDeskIddDriver";
-    PCWSTR hardwareIds = L"RustDeskIddDriver\0\0";
-    PCWSTR compatibleIds = L"RustDeskIddDriver\0\0";
+    PCWSTR instanceId = L"CodeDeskIddDriver";
+    PCWSTR hardwareIds = L"CodeDeskIddDriver\0\0";
+    PCWSTR compatibleIds = L"CodeDeskIddDriver\0\0";
 
     createInfo.cbSize = sizeof(createInfo);
     createInfo.pszzCompatibleIds = compatibleIds;
@@ -283,7 +283,7 @@ BOOL DeviceCreateWithLifetime(SW_DEVICE_LIFETIME *lifetime, PHSWDEVICE hSwDevice
         SWDeviceCapabilitiesDriverRequired;
 
     // Create the device
-    HRESULT hr = SwDeviceCreate(L"RustDeskIddDriver",
+    HRESULT hr = SwDeviceCreate(L"CodeDeskIddDriver",
         L"HTREE\\ROOT\\0",
         &createInfo,
         0,
@@ -1003,4 +1003,3 @@ LPSTR formatErrorString(DWORD error)
     );
     return errorString;
 }
-

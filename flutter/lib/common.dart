@@ -3763,11 +3763,56 @@ Widget loadPowered(BuildContext context) {
 const codeDeskAttribution =
     'CodeDesk is based on the open-source RustDesk project. CodeDesk is an independent project and is not affiliated with or endorsed by RustDesk.';
 
-const _codeDeskSourceUrl =
+const codeDeskSourceUrl =
     String.fromEnvironment('CODEDESK_SOURCE_URL', defaultValue: '');
+const codeDeskIssuesUrl =
+    String.fromEnvironment('CODEDESK_ISSUES_URL', defaultValue: '');
+const codeDeskWebsiteUrl =
+    String.fromEnvironment('CODEDESK_WEBSITE_URL', defaultValue: '');
+const codeDeskDownloadUrl =
+    String.fromEnvironment('CODEDESK_DOWNLOAD_URL', defaultValue: '');
+const codeDeskPrivacyUrl =
+    String.fromEnvironment('CODEDESK_PRIVACY_URL', defaultValue: '');
+const codeDeskDocsUrl =
+    String.fromEnvironment('CODEDESK_DOCS_URL', defaultValue: '');
+const codeDeskDocsMobileUrl =
+    String.fromEnvironment('CODEDESK_DOCS_MOBILE_URL', defaultValue: '');
+const codeDeskDocsLinuxPermissionsUrl = String.fromEnvironment(
+    'CODEDESK_DOCS_LINUX_PERMISSIONS_URL',
+    defaultValue: '');
+const codeDeskDocsX11Url =
+    String.fromEnvironment('CODEDESK_DOCS_X11_URL', defaultValue: '');
+const codeDeskDocsLinuxLoginUrl =
+    String.fromEnvironment('CODEDESK_DOCS_LINUX_LOGIN_URL', defaultValue: '');
+const codeDeskDocsHeadlessUrl =
+    String.fromEnvironment('CODEDESK_DOCS_HEADLESS_URL', defaultValue: '');
+const codeDeskDocsWhitelistUrl =
+    String.fromEnvironment('CODEDESK_DOCS_WHITELIST_URL', defaultValue: '');
+const codeDeskApiUrl =
+    String.fromEnvironment('CODEDESK_API_URL', defaultValue: '');
+const codeDeskUpdateApiUrl =
+    String.fromEnvironment('CODEDESK_UPDATE_API_URL', defaultValue: '');
+const codeDeskRendezvousServers =
+    String.fromEnvironment('CODEDESK_RENDEZVOUS_SERVERS', defaultValue: '');
 
-String codeDeskSourceUrl() {
-  return _codeDeskSourceUrl;
+bool codeDeskHasConfiguredIdServer() {
+  if (codeDeskRendezvousServers
+      .split(',')
+      .any((server) => server.trim().isNotEmpty)) {
+    return true;
+  }
+  return bind
+      .mainGetOptionSync(key: 'custom-rendezvous-server')
+      .trim()
+      .isNotEmpty;
+}
+
+Future<bool> openCodeDeskExternalUrl(String value) async {
+  final uri = Uri.tryParse(value);
+  if (uri == null || (uri.scheme != 'https' && uri.scheme != 'http')) {
+    return false;
+  }
+  return launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
 void showCodeDeskLicenses(BuildContext context) {
@@ -3780,12 +3825,7 @@ void showCodeDeskLicenses(BuildContext context) {
 }
 
 Future<void> openCodeDeskSource(BuildContext context) async {
-  final source = codeDeskSourceUrl();
-  final uri = Uri.tryParse(source);
-  if (uri != null &&
-      (uri.scheme == 'https' || uri.scheme == 'http') &&
-      await canLaunchUrl(uri)) {
-    await launchUrl(uri);
+  if (await openCodeDeskExternalUrl(codeDeskSourceUrl)) {
     return;
   }
   if (!context.mounted) {
@@ -3808,12 +3848,18 @@ Future<void> openCodeDeskSource(BuildContext context) async {
 }
 
 Future<void> showCodeDeskPrivacy(BuildContext context) async {
+  if (await openCodeDeskExternalUrl(codeDeskPrivacyUrl)) {
+    return;
+  }
+  if (!context.mounted) {
+    return;
+  }
   await showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
       title: Text(translate('Privacy Statement')),
       content: const Text(
-          'CodeDesk is designed for self-hosting. AI API keys, source code, and terminal content must not be sent to rendezvous or relay services. This independent baseline preserves inherited connection defaults for compatibility testing; distributors must disclose and configure all network services before release.'),
+          'CodeDesk is designed for self-hosting. AI API keys, source code, and terminal content must not be sent to rendezvous or relay services. This build does not define an external privacy statement URL.'),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(dialogContext).pop(),

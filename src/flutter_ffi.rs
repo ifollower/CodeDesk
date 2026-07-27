@@ -2823,7 +2823,8 @@ pub fn main_get_common(key: String) -> String {
         return false.to_string();
     } else if key == "is-support-printer-driver" {
         #[cfg(target_os = "windows")]
-        return crate::platform::is_win_10_or_greater().to_string();
+        return (crate::platform::is_win_10_or_greater() && remote_printer::is_driver_available())
+            .to_string();
         #[cfg(not(target_os = "windows"))]
         return false.to_string();
     } else if key == "transfer-job-id" {
@@ -2861,12 +2862,14 @@ pub fn main_get_common(key: String) -> String {
                 crate::common::is_custom_client(),
             ) {
                 (Ok(true), false) => match crate::platform::windows::release_arch_suffix() {
-                    Some(arch) => format!("rustdesk-{_version}-{arch}.msi"),
+                    Some(arch) => format!("codedesk-{_version}-windows-{arch}.msi"),
                     None => "error:unsupported".to_owned(),
                 },
                 (Ok(true), true) | (Ok(false), _) => {
                     match crate::platform::windows::release_arch_suffix() {
-                        Some(arch) => format!("rustdesk-{_version}-{arch}.exe"),
+                        Some(arch) => {
+                            format!("codedesk-{_version}-windows-{arch}-install.exe")
+                        }
                         None => "error:unsupported".to_owned(),
                     }
                 }
@@ -2878,9 +2881,9 @@ pub fn main_get_common(key: String) -> String {
             #[cfg(target_os = "macos")]
             {
                 return if cfg!(target_arch = "x86_64") {
-                    format!("rustdesk-{_version}-x86_64.dmg")
+                    format!("codedesk-{_version}-macos-x86_64.dmg")
                 } else if cfg!(target_arch = "aarch64") {
-                    format!("rustdesk-{_version}-aarch64.dmg")
+                    format!("codedesk-{_version}-macos-arm64.dmg")
                 } else {
                     "error:unsupported".to_owned()
                 };
@@ -2901,7 +2904,10 @@ pub fn main_get_common_sync(key: String) -> SyncReturn<String> {
 
 pub fn main_set_common(_key: String, _value: String) {
     #[cfg(target_os = "windows")]
-    if _key == "install-printer" && crate::platform::is_win_10_or_greater() {
+    if _key == "install-printer"
+        && crate::platform::is_win_10_or_greater()
+        && remote_printer::is_driver_available()
+    {
         std::thread::spawn(move || {
             let (success, msg) = match remote_printer::install_update_printer(&get_app_name()) {
                 Ok(_) => (true, "".to_owned()),

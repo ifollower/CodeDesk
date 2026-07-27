@@ -21,9 +21,9 @@ Generated binaries are placed in `server/target/release/`:
 
 - `hbbs` — ID/rendezvous and NAT traversal coordination
 - `hbbr` — relay service
-- `rustdesk-utils` — inherited server administration utilities
+- `codedesk-utils` — server administration utilities
 
-The binary names are currently retained for deployment and protocol compatibility.
+The protocol-facing `hbbs` and `hbbr` names are retained for deployment compatibility.
 
 ## Containers and packages
 

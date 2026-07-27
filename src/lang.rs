@@ -217,6 +217,12 @@ pub fn translate_locale(name: String, locale: &str) -> String {
         _ => en::T.deref(),
     };
     let (name, placeholder_value) = extract_placeholder(&name);
+    if name == "doc_mac_permission" {
+        return hbb_common::build_config::DOCS_URL.to_owned();
+    }
+    if name == "doc_fix_wayland" {
+        return hbb_common::build_config::DOCS_X11_URL.to_owned();
+    }
     let replace = |s: &&str| {
         let mut s = s.to_string();
         if let Some(value) = placeholder_value.as_ref() {

@@ -1,5 +1,6 @@
 .git
 .github
+.env
 target
 server/target
 flutter/build

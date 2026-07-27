@@ -10,7 +10,12 @@ Virtual display may be used on computers that do not have a monitor.
 
 Win10 provides [Indirect Display Driver Model](https://msdn.microsoft.com/en-us/library/windows/hardware/mt761968(v=vs.85).aspx).
 
-This lib uses [this project](https://github.com/rustdesk-org/RustDeskIddDriver) as the driver.
+The controller integration was originally derived from
+[RustDeskIddDriver](https://github.com/rustdesk-org/RustDeskIddDriver). CodeDesk
+uses its own hardware ID, interface GUID, device name, and expected package path:
+`CodeDeskIddDriver/CodeDeskIddDriver.inf`. No Windows display driver binary or
+certificate is bundled in this repository; the feature is unavailable until a
+CodeDesk-owned driver has been built and signed.
 
 
 **NOTE**: Versions before Win10 1607. Try follow [this method](https://github.com/fanxiushu/xdisp_virt/tree/master/indirect_display).

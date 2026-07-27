@@ -939,7 +939,7 @@ pub fn is_modifier(evt: &KeyEvent) -> bool {
 }
 
 pub fn check_software_update() {
-    if is_custom_client() {
+    if hbb_common::build_config::UPDATE_API_URL.is_empty() {
         return;
     }
     let opt = LocalConfig::get_option(keys::OPTION_ENABLE_CHECK_UPDATE);
@@ -948,12 +948,13 @@ pub fn check_software_update() {
     }
 }
 
-// No need to check `danger_accept_invalid_cert` for now.
-// Because the url is always `https://api.rustdesk.com/version/latest`.
 #[tokio::main(flavor = "current_thread")]
 pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
+    if hbb_common::build_config::UPDATE_API_URL.is_empty() {
+        return Ok(());
+    }
     let (request, url) =
-        hbb_common::version_check_request(hbb_common::VER_TYPE_RUSTDESK_CLIENT.to_string());
+        hbb_common::version_check_request(hbb_common::VER_TYPE_CODEDESK_CLIENT.to_string());
     let proxy_conf = Config::get_socks();
     let tls_url = get_url_for_tls(&url, &proxy_conf);
     let tls_type = get_cached_tls_type(tls_url);
@@ -1080,13 +1081,44 @@ fn get_api_server_(api: String, custom: String) -> String {
             return format!("http://{}", s);
         }
     }
-    "https://admin.rustdesk.com".to_owned()
+    hbb_common::build_config::API_URL.to_owned()
 }
 
 #[inline]
 pub fn is_public(url: &str) -> bool {
-    let url = url.to_ascii_lowercase();
-    url.contains("rustdesk.com/") || url.ends_with("rustdesk.com")
+    let configured_hosts = hbb_common::build_config::rendezvous_servers()
+        .into_iter()
+        .chain([hbb_common::build_config::API_URL.to_owned()]);
+    is_public_with_hosts(url, configured_hosts)
+}
+
+fn is_public_with_hosts<I, S>(url: &str, configured_hosts: I) -> bool
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    let target_host = normalized_host(url);
+    !target_host.is_empty()
+        && configured_hosts
+            .into_iter()
+            .map(|configured| normalized_host(configured.as_ref()))
+            .any(|configured_host| configured_host == target_host)
+}
+
+fn normalized_host(value: &str) -> String {
+    let value = value.trim();
+    if value.is_empty() {
+        return String::new();
+    }
+    let with_scheme = if value.contains("://") {
+        value.to_owned()
+    } else {
+        format!("codedesk://{value}")
+    };
+    url::Url::parse(&with_scheme)
+        .ok()
+        .and_then(|parsed| parsed.host_str().map(str::to_ascii_lowercase))
+        .unwrap_or_default()
 }
 
 pub fn get_udp_punch_enabled() -> bool {
@@ -2766,27 +2798,19 @@ mod tests {
 
     #[test]
     fn test_is_public() {
-        // Test URLs containing "rustdesk.com/"
-        assert!(is_public("https://rustdesk.com/"));
-        assert!(is_public("https://www.rustdesk.com/"));
-        assert!(is_public("https://api.rustdesk.com/v1"));
-        assert!(is_public("https://API.RUSTDESK.COM/v1"));
-        assert!(is_public("https://rustdesk.com/path"));
-
-        // Test URLs ending with "rustdesk.com"
-        assert!(is_public("rustdesk.com"));
-        assert!(is_public("https://rustdesk.com"));
-        assert!(is_public("https://RustDesk.com"));
-        assert!(is_public("http://www.rustdesk.com"));
-        assert!(is_public("https://api.rustdesk.com"));
-
-        // Test non-public URLs
-        assert!(!is_public("https://example.com"));
-        assert!(!is_public("https://custom-server.com"));
-        assert!(!is_public("http://192.168.1.1"));
-        assert!(!is_public("localhost"));
-        assert!(!is_public("https://rustdesk.computer.com"));
-        assert!(!is_public("rustdesk.comhello.com"));
+        let configured = ["id.example.com:21116", "https://api.example.com"];
+        assert!(is_public_with_hosts("id.example.com", configured));
+        assert!(is_public_with_hosts(
+            "https://api.example.com/v1",
+            configured
+        ));
+        assert!(is_public_with_hosts(
+            "https://API.EXAMPLE.COM/v1",
+            configured
+        ));
+        assert!(!is_public_with_hosts("https://example.com", configured));
+        assert!(!is_public_with_hosts("http://192.168.1.1", configured));
+        assert!(!is_public_with_hosts("localhost", configured));
     }
 
     #[test]
@@ -2802,10 +2826,6 @@ mod tests {
         assert!(!should_use_tcp_proxy_for_api_url(
             "https://api.telegram.org/bot123/sendMessage",
             "https://admin.example.com"
-        ));
-        assert!(!should_use_tcp_proxy_for_api_url(
-            "https://admin.rustdesk.com/api/login",
-            "https://admin.rustdesk.com"
         ));
         assert!(!should_use_tcp_proxy_for_api_url(
             "https://admin.example.com/api/login",

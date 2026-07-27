@@ -29,7 +29,7 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz \
 
 COPY --from=builder /source/server/target/release/hbbs /usr/bin/hbbs
 COPY --from=builder /source/server/target/release/hbbr /usr/bin/hbbr
-COPY --from=builder /source/server/target/release/rustdesk-utils /usr/bin/rustdesk-utils
+COPY --from=builder /source/server/target/release/codedesk-utils /usr/bin/codedesk-utils
 COPY server/docker/rootfs /
 
 ENV RELAY=relay.example.com
