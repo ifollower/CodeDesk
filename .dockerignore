@@ -1,6 +1,7 @@
 .git
 .github
 .env
+.secrets
 target
 server/target
 flutter/build

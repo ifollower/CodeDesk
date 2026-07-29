@@ -1,0 +1,35 @@
+import tempfile
+import unittest
+from pathlib import Path
+
+import release
+
+
+class ReleaseScriptTests(unittest.TestCase):
+    def test_repository_versions_match(self):
+        flutter_version, build_number = release.flutter_version()
+        self.assertEqual(release.cargo_version(), flutter_version)
+        self.assertTrue(build_number.isdigit())
+
+    def test_normalize_version(self):
+        self.assertEqual("1.2.3", release.normalize_version("v1.2.3"))
+        with self.assertRaises(release.ReleaseError):
+            release.normalize_version("1.2")
+
+    def test_ios_export_options(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary) / "ExportOptions.plist"
+            release._write_export_options(
+                destination,
+                method="app-store",
+                team_id="TEAM123",
+                profile_name="codedesk-ios-app-store",
+            )
+            contents = destination.read_text(encoding="utf-8")
+            self.assertIn("<string>app-store</string>", contents)
+            self.assertIn("<string>TEAM123</string>", contents)
+            self.assertIn("<string>codedesk-ios-app-store</string>", contents)
+
+
+if __name__ == "__main__":
+    unittest.main()

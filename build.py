@@ -585,6 +585,43 @@ def build_flutter_arch_manjaro(version, features):
     system2('HBB=`pwd`/.. FLUTTER=1 makepkg -f')
 
 
+def sign_flutter_windows_bundle():
+    if os.environ.get('CODEDESK_SIGN_WINDOWS_BUNDLE') != '1':
+        return
+    pfx = os.environ.get('WINDOWS_SIGNING_PFX', '')
+    password = os.environ.get('WINDOWS_SIGNING_PASSWORD', '')
+    timestamp = os.environ.get(
+        'WINDOWS_TIMESTAMP_URL', 'http://timestamp.digicert.com')
+    signtool = shutil.which(os.environ.get('SIGNTOOL', 'signtool'))
+    if not pfx or not os.path.isfile(pfx) or not password or not signtool:
+        sys.stderr.write(
+            'Windows bundle signing requires signtool, WINDOWS_SIGNING_PFX, '
+            'and WINDOWS_SIGNING_PASSWORD.\n')
+        sys.exit(-1)
+
+    bundle = Path(flutter_build_dir_2)
+    binaries = sorted(
+        path for path in bundle.rglob('*')
+        if path.is_file() and path.suffix.lower() in ('.exe', '.dll')
+    )
+    for binary in binaries:
+        result = subprocess.run(
+            [
+                signtool, 'sign',
+                '/fd', 'SHA256',
+                '/td', 'SHA256',
+                '/tr', timestamp,
+                '/f', pfx,
+                '/p', password,
+                str(binary),
+            ],
+            check=False,
+        )
+        if result.returncode != 0:
+            sys.stderr.write(f'Failed to sign Windows bundle file: {binary}\n')
+            sys.exit(-1)
+
+
 def build_flutter_windows(version, features, skip_portable_pack):
     if not skip_cargo:
         system2(f'cargo build --locked --features {features} --lib --release')
@@ -599,6 +636,7 @@ def build_flutter_windows(version, features, skip_portable_pack):
     os.chdir('..')
     shutil.copy2('target/release/deps/dylib_virtual_display.dll',
                  flutter_build_dir_2)
+    sign_flutter_windows_bundle()
     if skip_portable_pack:
         return
     os.chdir('libs/portable')

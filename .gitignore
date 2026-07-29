@@ -5,6 +5,11 @@
 .idea
 .DS_Store
 .env
+/.secrets/
+*.p12
+*.pfx
+*.mobileprovision
+AuthKey_*.p8
 libsciter-gtk.so
 src/ui/inline.rs
 extractor
@@ -60,6 +65,7 @@ flutter/web/
 
 server/id*
 server/db*
+server/data/
 server/debian-build
 server/debian/.debhelper
 server/debian/debhelper-build-stamp

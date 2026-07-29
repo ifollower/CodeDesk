@@ -48,13 +48,17 @@ CodeDesk 是一个独立开源的远程工作台，面向“通过手机或另�
 所有标准命令都从仓库根目录执行：
 
 ```bash
-cargo test -p hbb_common --locked
-cargo build --locked
-DATABASE_URL=sqlite://./db_v2.sqlite3 \
-  cargo build --manifest-path server/Cargo.toml --locked --release --bins
+make doctor
+make package-server
+make package-android PROFILE=dev FORMAT=apk
+make package-macos PROFILE=dev       # 仅 macOS
+make package-ios PROFILE=release     # 仅 macOS，需要 Apple 签名
+make package-windows PROFILE=dev     # 仅 Windows
 ```
 
-客户端还需要相应平台的原生库和 Flutter 环境。完整说明见[构建指南](BUILDING.md)。
+服务端和 Android 使用 Docker 构建；macOS/iOS 必须使用 Xcode，Windows
+必须使用 Windows 原生工具链。产物统一写入 `target/packages/<platform>/`。
+完整的工具链、签名、自托管 runner 和发布命令见[构建指南](BUILDING.md)。
 
 ## 当前服务器策略
 

@@ -1,0 +1,8 @@
+[source.crates-io]
+replace-with = "codedesk-mirror"
+
+[source.codedesk-mirror]
+registry = "__CARGO_REGISTRY_INDEX__"
+
+[net]
+git-fetch-with-cli = true

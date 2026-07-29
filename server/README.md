@@ -30,10 +30,19 @@ The protocol-facing `hbbs` and `hbbr` names are retained for deployment compatib
 Docker and Debian jobs must use a full CodeDesk clone. For Docker, use the repository root as context:
 
 ```bash
-docker build -f server/docker/Dockerfile -t codedesk-server .
+make package-server
+make server-up
+make server-logs
+make server-down
+
+# Export both supported architectures as Docker image tar files.
+make package-server-all
 ```
 
-Using `server/` alone as the context will omit the shared library and is unsupported.
+The image runs `hbbs` and `hbbr` under s6-overlay and persists their data in
+`/data`. Set `RELAY=<public-host>:21117` for deployments that advertise the
+relay service. Using `server/` alone as a Docker build context will omit the
+shared library and is unsupported.
 
 ## Security boundary
 
