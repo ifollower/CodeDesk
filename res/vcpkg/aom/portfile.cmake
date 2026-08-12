@@ -28,6 +28,9 @@ else()
             # aom-avx2.diff
             # Can be dropped when https://bugs.chromium.org/p/aomedia/issues/detail?id=3029 is merged into the upstream
             aom-install.diff
+            # Backport https://aomedia.googlesource.com/aom/+/6d2b7f71b98bfa28e372b1f2d85f137280bdb3de
+            # so AOM 3.12.1 detects the split help output introduced by NASM 3.
+            aom-nasm3.diff
     )
 endif()
 
