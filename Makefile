@@ -15,6 +15,7 @@ PROFILE ?= dev
 FORMAT ?= apk
 DISTRIBUTION ?= app-store
 VERSION ?=
+RELEASE_CHECK_PROFILE ?= release
 
 ifeq ($(OS),Windows_NT)
 FLUTTER ?= flutter
@@ -165,7 +166,7 @@ server-down:
 	$(DOCKER) compose -f server/docker-compose.yml down
 
 release-check:
-	$(ENV_RUN) $(RELEASE) release-check --version $(VERSION)
+	$(ENV_RUN) $(RELEASE) release-check --version $(VERSION) --profile $(RELEASE_CHECK_PROFILE)
 
 release-config-check:
 	$(PYTHON) scripts/codedesk_env.py check --env-file $(ENV_FILE)

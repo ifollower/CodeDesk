@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 import release
@@ -15,6 +16,15 @@ class ReleaseScriptTests(unittest.TestCase):
         self.assertEqual("1.2.3", release.normalize_version("v1.2.3"))
         with self.assertRaises(release.ReleaseError):
             release.normalize_version("1.2")
+
+    def test_dev_release_check_does_not_require_public_configuration(self):
+        with mock.patch.dict(release.os.environ, {}, clear=True):
+            release.release_check(release.cargo_version(), profile="dev")
+
+    def test_release_check_requires_public_configuration(self):
+        with mock.patch.dict(release.os.environ, {}, clear=True):
+            with self.assertRaises(release.ReleaseError):
+                release.release_check(release.cargo_version(), profile="release")
 
     def test_ios_export_options(self):
         with tempfile.TemporaryDirectory() as temporary:

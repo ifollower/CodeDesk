@@ -945,7 +945,7 @@ def install_android(version: str) -> None:
     run(["adb", "install", "-r", str(package)])
 
 
-def release_check(version: str) -> None:
+def release_check(version: str, *, profile: str = "release") -> None:
     cargo = cargo_version()
     flutter, _ = flutter_version()
     errors: list[str] = []
@@ -953,11 +953,12 @@ def release_check(version: str) -> None:
         errors.append(f"Git/release version {version} != Cargo version {cargo}")
     if version != flutter:
         errors.append(f"Git/release version {version} != Flutter version {flutter}")
-    values = {key: os.environ.get(key, "") for key in CODEDESK_BUILD_KEYS}
-    errors.extend(validate_release_config(values))
+    if profile == "release":
+        values = {key: os.environ.get(key, "") for key in CODEDESK_BUILD_KEYS}
+        errors.extend(validate_release_config(values))
     if errors:
         raise ReleaseError("release check failed:\n- " + "\n- ".join(errors))
-    print(f"CodeDesk release configuration is valid for v{version}.")
+    print(f"CodeDesk {profile} build configuration is valid for v{version}.")
 
 
 def validate_client_package_version(version: str) -> None:
@@ -1063,6 +1064,9 @@ def parse_args() -> argparse.Namespace:
 
     check_parser = subparsers.add_parser("release-check")
     check_parser.add_argument("--version", required=True)
+    check_parser.add_argument(
+        "--profile", choices=("dev", "release"), default="release"
+    )
     return parser.parse_args()
 
 
@@ -1081,7 +1085,7 @@ def main() -> int:
         elif args.command == "install-android":
             install_android(normalize_version(args.version))
         elif args.command == "release-check":
-            release_check(normalize_version(args.version))
+            release_check(normalize_version(args.version), profile=args.profile)
         elif args.command == "package":
             version = normalize_version(args.version)
             if args.target != "server":

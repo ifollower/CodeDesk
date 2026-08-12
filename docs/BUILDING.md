@@ -256,6 +256,9 @@ For an unsigned validation build, open **Actions > CodeDesk Release > Run
 workflow**, enter the Cargo/Flutter version, select the `dev` profile, and leave
 the iOS option disabled. Manual runs use only GitHub-hosted validation,
 Windows, and macOS runners; they do not wait for the Linux/Android runner.
+Development runs validate the Cargo/Flutter version but do not require the
+public `CODEDESK_*` repository variables. Their missing values remain empty in
+the unsigned test packages.
 Tag-triggered builds always use the signed `release` profile, include iOS, and
 run the Docker-based Linux/Android release job.
 

@@ -55,7 +55,7 @@ jobs:
       - uses: actions/checkout@v6
       - name: Validate tag, versions, and public build configuration
         shell: bash
-        run: make release-check VERSION="${CODEDESK_RELEASE_VERSION#v}"
+        run: make release-check VERSION="${CODEDESK_RELEASE_VERSION#v}" RELEASE_CHECK_PROFILE="$CODEDESK_RELEASE_PROFILE"
 
   linux:
     needs: validate
