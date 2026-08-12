@@ -86,7 +86,20 @@ def flutter_build_define_args():
     ]
 
 
+def resolve_flutter_command(command=None):
+    configured = command or flutter_cmd
+    resolved = shutil.which(configured)
+    if resolved is None:
+        sys.stderr.write(
+            f'Flutter SDK not found: {configured}. Install Flutter {flutter_version} '
+            'and make sure its bin directory is in PATH.\n'
+        )
+        sys.exit(-1)
+    return resolved
+
+
 def generate_flutter_bridge():
+    global flutter_cmd
     codegen = os.environ.get('FLUTTER_RUST_BRIDGE_CODEGEN')
     if codegen:
         codegen_path = Path(codegen).expanduser()
@@ -116,13 +129,10 @@ def generate_flutter_bridge():
             '--features uuid --locked --force'
         )
 
-    flutter_path = shutil.which(flutter_cmd)
-    if flutter_path is None:
-        sys.stderr.write(
-            f'Flutter SDK not found: {flutter_cmd}. Install Flutter {flutter_version} '
-            'and make sure its bin directory is in PATH.\n'
-        )
-        sys.exit(-1)
+    flutter_path = resolve_flutter_command()
+    # Keep the resolved executable for all later platform build steps. On
+    # Windows this preserves the .bat/.cmd suffix found through PATHEXT.
+    flutter_cmd = flutter_path
 
     version_result = subprocess.run(
         [flutter_path, '--version', '--machine'],
