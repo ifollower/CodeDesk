@@ -225,15 +225,12 @@ jobs:
         shell: powershell
         run: |
           $llvm = "C:\Program Files\LLVM\bin"
-          $make = "C:\msys64\usr\bin\make.exe"
           $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" |
             Sort-Object FullName -Descending |
             Select-Object -First 1 -ExpandProperty FullName
           if (-not (Test-Path "$llvm\libclang.dll")) { throw "libclang.dll was not found in $llvm" }
-          if (-not (Test-Path $make)) { throw "GNU Make was not found at $make" }
           if (-not $signtool) { throw "signtool.exe was not found" }
           "LIBCLANG_PATH=$llvm" | Out-File $env:GITHUB_ENV -Append
-          "CODEDESK_MAKE=$make" | Out-File $env:GITHUB_ENV -Append
           "SIGNTOOL=$signtool" | Out-File $env:GITHUB_ENV -Append
           flutter config --enable-windows-desktop
       - name: Prepare pinned Windows native dependencies
@@ -254,7 +251,7 @@ jobs:
         shell: powershell
         run: |
           $version = $env:CODEDESK_RELEASE_VERSION.TrimStart("v")
-          & $env:CODEDESK_MAKE package-windows "PROFILE=$env:CODEDESK_RELEASE_PROFILE" "VERSION=$version"
+          python scripts/release.py package windows --profile $env:CODEDESK_RELEASE_PROFILE --version $version
       - uses: actions/upload-artifact@v4
         with:
           name: codedesk-windows-${{ env.CODEDESK_RELEASE_VERSION }}
