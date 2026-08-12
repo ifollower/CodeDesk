@@ -4,11 +4,33 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (for example 1.4.9)"
+        required: true
+        type: string
+      profile:
+        description: "Build signed release packages or unsigned development packages"
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - release
+      build_ios:
+        description: "Also build the signed iOS IPA"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: write
 
 env:
+  CODEDESK_RELEASE_VERSION: ${{ inputs.version || github.ref_name }}
+  CODEDESK_RELEASE_PROFILE: ${{ github.event_name == 'push' && 'release' || inputs.profile }}
+  CODEDESK_BUILD_IOS: ${{ github.event_name == 'push' && 'true' || inputs.build_ios }}
   CODEDESK_SOURCE_URL: ${{ vars.CODEDESK_SOURCE_URL }}
   CODEDESK_ISSUES_URL: ${{ vars.CODEDESK_ISSUES_URL }}
   CODEDESK_WEBSITE_URL: ${{ vars.CODEDESK_WEBSITE_URL }}
@@ -28,15 +50,16 @@ env:
 
 jobs:
   validate:
-    runs-on: [self-hosted, codedesk-linux]
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
       - name: Validate tag, versions, and public build configuration
         shell: bash
-        run: make release-check VERSION="${GITHUB_REF_NAME#v}"
+        run: make release-check VERSION="${CODEDESK_RELEASE_VERSION#v}"
 
   linux:
     needs: validate
+    if: github.event_name == 'push'
     runs-on: [self-hosted, codedesk-linux]
     env:
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -66,19 +89,20 @@ jobs:
           PY
       - name: Export server images
         shell: bash
-        run: make package-server-all VERSION="${GITHUB_REF_NAME#v}"
+        run: make package-server-all VERSION="${CODEDESK_RELEASE_VERSION#v}"
       - name: Build signed Android APK and AAB
         shell: bash
         run: |
           make docker-android-builder
-          make package-android PROFILE=release FORMAT=all VERSION="${GITHUB_REF_NAME#v}"
+          make package-android PROFILE=release FORMAT=all VERSION="${CODEDESK_RELEASE_VERSION#v}"
       - uses: actions/upload-artifact@v4
         with:
-          name: codedesk-linux-${{ github.ref_name }}
+          name: codedesk-linux-${{ env.CODEDESK_RELEASE_VERSION }}
           path: |
             target/packages/server/*
             target/packages/android/*
           if-no-files-found: error
+          retention-days: 7
       - name: Remove Android signing material
         if: always()
         shell: bash
@@ -86,8 +110,12 @@ jobs:
 
   apple:
     needs: validate
-    runs-on: [self-hosted, codedesk-macos]
+    runs-on: macos-26-intel
     env:
+      VCPKG_ROOT: ${{ runner.temp }}/codedesk-vcpkg
+      VCPKG_INSTALLED_ROOT: ${{ runner.temp }}/codedesk-vcpkg/installed
+      VCPKG_BINARY_CACHE: ${{ runner.temp }}/codedesk-vcpkg-cache
+      VCPKG_BINARY_SOURCES: clear;files,${{ runner.temp }}/codedesk-vcpkg-cache,readwrite
       APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
       APPLE_DEVELOPER_ID_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
       APPLE_DISTRIBUTION_P12_BASE64: ${{ secrets.APPLE_DISTRIBUTION_P12_BASE64 }}
@@ -99,25 +127,62 @@ jobs:
       APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
     steps:
       - uses: actions/checkout@v6
+      - name: Select pinned Xcode
+        shell: bash
+        run: |
+          sudo xcode-select --switch "/Applications/Xcode_$(cat .xcode-version).app/Contents/Developer"
+          xcodebuild -version
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
       - name: Install pinned Rust release toolchain
         shell: bash
-        run: rustup toolchain install 1.87.0 --profile minimal
+        run: |
+          rustup toolchain install 1.87.0 --profile minimal
+          rustup target add --toolchain 1.87.0 aarch64-apple-darwin x86_64-apple-darwin aarch64-apple-ios
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin/flutter_rust_bridge_codegen
+          key: apple-cargo-1.87.0-${{ hashFiles('Cargo.lock', 'flutter/pubspec.lock') }}
+          restore-keys: apple-cargo-1.87.0-
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_BINARY_CACHE }}
+          key: apple-vcpkg-${{ hashFiles('vcpkg.json', 'res/vcpkg/**', 'scripts/ci/prepare_vcpkg.py') }}
+          restore-keys: apple-vcpkg-
+      - name: Prepare pinned Apple native dependencies
+        shell: bash
+        run: |
+          mkdir -p "$VCPKG_BINARY_CACHE"
+          args=(--platform apple)
+          if [[ "$CODEDESK_BUILD_IOS" == "true" ]]; then
+            args+=(--with-ios)
+          fi
+          python3 scripts/ci/prepare_vcpkg.py "${args[@]}"
       - name: Import temporary Apple signing material
+        if: env.CODEDESK_RELEASE_PROFILE == 'release' || env.CODEDESK_BUILD_IOS == 'true'
         shell: bash
         run: bash scripts/ci/import_apple_signing.sh
       - name: Build signed and notarized Universal 2 DMG
         shell: bash
-        run: make package-macos PROFILE=release VERSION="${GITHUB_REF_NAME#v}"
+        run: make package-macos PROFILE="$CODEDESK_RELEASE_PROFILE" VERSION="${CODEDESK_RELEASE_VERSION#v}"
       - name: Build App Store IPA
+        if: env.CODEDESK_BUILD_IOS == 'true'
         shell: bash
-        run: make package-ios PROFILE=release DISTRIBUTION=app-store VERSION="${GITHUB_REF_NAME#v}"
+        run: make package-ios PROFILE=release DISTRIBUTION=app-store VERSION="${CODEDESK_RELEASE_VERSION#v}"
       - uses: actions/upload-artifact@v4
         with:
-          name: codedesk-apple-${{ github.ref_name }}
+          name: codedesk-apple-${{ env.CODEDESK_RELEASE_VERSION }}
           path: |
             target/packages/macos/*
             target/packages/ios/*
           if-no-files-found: error
+          retention-days: 7
       - name: Remove temporary Apple signing material
         if: always()
         shell: bash
@@ -125,16 +190,59 @@ jobs:
 
   windows:
     needs: validate
-    runs-on: [self-hosted, codedesk-windows]
+    runs-on: windows-2025
     env:
+      VCPKG_ROOT: ${{ runner.temp }}/codedesk-vcpkg
+      VCPKG_INSTALLED_ROOT: ${{ runner.temp }}/codedesk-vcpkg/installed
+      VCPKG_BINARY_CACHE: ${{ runner.temp }}/codedesk-vcpkg-cache
+      VCPKG_BINARY_SOURCES: clear;files,${{ runner.temp }}/codedesk-vcpkg-cache,readwrite
       WINDOWS_SIGNING_PASSWORD: ${{ secrets.WINDOWS_SIGNING_PASSWORD }}
       WINDOWS_TIMESTAMP_URL: ${{ vars.WINDOWS_TIMESTAMP_URL }}
     steps:
       - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
       - name: Install pinned Rust release toolchain
         shell: powershell
         run: rustup toolchain install 1.87.0 --profile minimal
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin/flutter_rust_bridge_codegen.exe
+          key: windows-cargo-1.87.0-${{ hashFiles('Cargo.lock', 'flutter/pubspec.lock') }}
+          restore-keys: windows-cargo-1.87.0-
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_BINARY_CACHE }}
+          key: windows-vcpkg-${{ hashFiles('vcpkg.json', 'res/vcpkg/**', 'scripts/ci/prepare_vcpkg.py') }}
+          restore-keys: windows-vcpkg-
+      - name: Configure Windows build tools
+        shell: powershell
+        run: |
+          $llvm = "C:\Program Files\LLVM\bin"
+          $make = "C:\msys64\usr\bin\make.exe"
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1 -ExpandProperty FullName
+          if (-not (Test-Path "$llvm\libclang.dll")) { throw "libclang.dll was not found in $llvm" }
+          if (-not (Test-Path $make)) { throw "GNU Make was not found at $make" }
+          if (-not $signtool) { throw "signtool.exe was not found" }
+          "LIBCLANG_PATH=$llvm" | Out-File $env:GITHUB_ENV -Append
+          "CODEDESK_MAKE=$make" | Out-File $env:GITHUB_ENV -Append
+          "SIGNTOOL=$signtool" | Out-File $env:GITHUB_ENV -Append
+          flutter config --enable-windows-desktop
+      - name: Prepare pinned Windows native dependencies
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:VCPKG_BINARY_CACHE | Out-Null
+          python scripts/ci/prepare_vcpkg.py --platform windows
       - name: Decode Windows signing certificate
+        if: env.CODEDESK_RELEASE_PROFILE == 'release'
         shell: powershell
         env:
           PFX_BASE64: ${{ secrets.WINDOWS_SIGNING_PFX_BASE64 }}
@@ -144,12 +252,15 @@ jobs:
           "WINDOWS_SIGNING_PFX=$path" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Build signed Windows installer
         shell: powershell
-        run: make package-windows PROFILE=release VERSION="$($env:GITHUB_REF_NAME.TrimStart('v'))"
+        run: |
+          $version = $env:CODEDESK_RELEASE_VERSION.TrimStart("v")
+          & $env:CODEDESK_MAKE package-windows "PROFILE=$env:CODEDESK_RELEASE_PROFILE" "VERSION=$version"
       - uses: actions/upload-artifact@v4
         with:
-          name: codedesk-windows-${{ github.ref_name }}
+          name: codedesk-windows-${{ env.CODEDESK_RELEASE_VERSION }}
           path: target/packages/windows/*
           if-no-files-found: error
+          retention-days: 7
       - name: Remove Windows signing certificate
         if: always()
         shell: powershell
@@ -157,7 +268,8 @@ jobs:
 
   draft-release:
     needs: [linux, apple, windows]
-    runs-on: [self-hosted, codedesk-linux]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v4
         with:

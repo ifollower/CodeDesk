@@ -1,0 +1,90 @@
+[
+  { "name": "x11-rs", "url": "https://github.com/bjornsnoen/x11-rs", "commit": "c2e9bfaa7b196938f8700245564d8ac5d447786a" },
+  {
+    "name": "cacao",
+    "url": "https://github.com/clslaid/cacao",
+    "commit": "05e1536b0b43aaae308ec72c0eed703e875b7b95",
+    "replacements": [
+      {
+        "file": "Cargo.toml",
+        "from": "core-foundation = { git = \"https://github.com/madsmtm/core-foundation-rs.git\", rev = \"7d593d016175755e492a92ef89edca68ac3bd5cd\" }",
+        "to": "core-foundation = { path = \"../core-foundation-rs/core-foundation\" }"
+      },
+      {
+        "file": "Cargo.toml",
+        "from": "core-graphics = { git = \"https://github.com/madsmtm/core-foundation-rs.git\", rev = \"7d593d016175755e492a92ef89edca68ac3bd5cd\" }",
+        "to": "core-graphics = { path = \"../core-foundation-rs/core-graphics\" }"
+      }
+    ]
+  },
+  { "name": "x11-clipboard", "url": "https://github.com/clslaid/x11-clipboard", "commit": "5fc2e73bc01ada3681159b34cf3ea8f0d14cd904" },
+  { "name": "core-foundation-rs", "url": "https://github.com/madsmtm/core-foundation-rs.git", "commit": "7d593d016175755e492a92ef89edca68ac3bd5cd" },
+  { "name": "async-speed-limit", "url": "https://github.com/open-trade/async-speed-limit", "commit": "f89f702ae01d4016429543d2f0dda1086157e420" },
+  { "name": "android-wakelock", "url": "https://github.com/rustdesk-org/android-wakelock", "commit": "d0292e5a367e627c4fa6f1ca6bdfad005dca7d90" },
+  { "name": "arboard", "url": "https://github.com/rustdesk-org/arboard", "commit": "c7d5781f563176df9efd8df6287e823fb1b9bed5" },
+  { "name": "clipboard-master", "url": "https://github.com/rustdesk-org/clipboard-master", "commit": "7762d74e38db37cfeb6ded88c964b9cdbddfb6db" },
+  { "name": "confy", "url": "https://github.com/rustdesk-org/confy", "commit": "83db9ec19a2f97e9718aef69e4fc5611bb382479" },
+  {
+    "name": "cpal",
+    "url": "https://github.com/rustdesk-org/cpal",
+    "commit": "6b374bcaed076750ca8fce6da518ab39b882e14a",
+    "replacements": [
+      {
+        "file": "Cargo.toml",
+        "from": "cidre = { git = \"https://github.com/yury/cidre.git\", rev = \"f05c428\", features = [",
+        "to": "cidre = { path = \"../cidre/cidre\", features = ["
+      }
+    ]
+  },
+  { "name": "default_net", "url": "https://github.com/rustdesk-org/default_net", "commit": "78f8f70cd85151a3a2c4a3230d80d5272703c02e" },
+  { "name": "evdev", "url": "https://github.com/rustdesk-org/evdev", "commit": "cec616e37790293d2cd2aa54a96601ed6b1b35a9" },
+  { "name": "hwcodec", "url": "https://github.com/rustdesk-org/hwcodec", "commit": "778df1f99597722473b29443bac22ae6c23946fe" },
+  { "name": "impersonate-system", "url": "https://github.com/rustdesk-org/impersonate-system", "commit": "2f429010a5a10b1fe5eceb553c6672fd53d20167" },
+  { "name": "kcp-sys", "url": "https://github.com/rustdesk-org/kcp-sys", "commit": "32a6c09fc6223f54aea83981a6aa8995931d29be" },
+  { "name": "keepawake-rs", "url": "https://github.com/rustdesk-org/keepawake-rs", "commit": "64d568586dd16551d02120e19668d2b0fec8e3c9" },
+  { "name": "machine-uid", "url": "https://github.com/rustdesk-org/machine-uid", "commit": "381ff579c1dc3a6c54db9dfec47c44bcb0246542" },
+  { "name": "magnum-opus", "url": "https://github.com/rustdesk-org/magnum-opus", "commit": "588c6e1f9ed50c3a01fa64f3bd3e7cdb0378a114" },
+  { "name": "nokhwa", "url": "https://github.com/rustdesk-org/nokhwa.git", "commit": "c2f74662b6ce117f7f94301693fdfadc0b1ec91a" },
+  {
+    "name": "pam",
+    "url": "https://github.com/rustdesk-org/pam",
+    "commit": "7bfd25510202cd269292cbdd7c71f3977a6fd762",
+    "replacements": [
+      {
+        "file": "Cargo.toml",
+        "from": "pam-sys = { git=\"https://github.com/rustdesk-org/pam-sys\", branch = \"fix/v1.0.0-alpha4_gnuc_va_list\" }",
+        "to": "pam-sys = { path = \"../pam-sys\" }"
+      }
+    ]
+  },
+  { "name": "pam-sys", "url": "https://github.com/rustdesk-org/pam-sys", "commit": "3337c9bb9a9c68d7497ec8c93cad2368c26091b7" },
+  { "name": "parity-tokio-ipc", "url": "https://github.com/rustdesk-org/parity-tokio-ipc", "commit": "d0ae39bffe5d5a3e8d82a1b6bcb1ca5a9b2f1c01" },
+  { "name": "pulsectl", "url": "https://github.com/rustdesk-org/pulsectl", "commit": "aa34dde499aa912a3abc5289cc0b547bd07dd6e2" },
+  { "name": "rdev", "url": "https://github.com/rustdesk-org/rdev", "commit": "871bf1c856d6a30af2f56ab8848396a025140855" },
+  { "name": "rust-sciter", "url": "https://github.com/rustdesk-org/rust-sciter", "commit": "5322f3a755a0e6bf999fbc60d1efc35246c0f821" },
+  { "name": "rust-webm", "url": "https://github.com/rustdesk-org/rust-webm", "commit": "d2c4d3ac133c7b0e4c0f656da710b48391981e64" },
+  { "name": "sysinfo", "url": "https://github.com/rustdesk-org/sysinfo", "commit": "90b1705d909a4902dbbbdea37ee64db17841077d" },
+  { "name": "tao", "url": "https://github.com/rustdesk-org/tao", "commit": "288c219cb0527e509590c2b2d8e7072aa9feb2d3" },
+  {
+    "name": "the-fat-controller",
+    "url": "https://github.com/rustdesk-org/The-Fat-Controller",
+    "commit": "78bb80a8e596e4c14ae57c8448f5fca75f91f2b0",
+    "replacements": [
+      {
+        "file": "Cargo.toml",
+        "from": "x11 = { git=\"https://github.com/bjornsnoen/x11-rs\", features = [\"xlib\"] }",
+        "to": "x11 = { path = \"../x11-rs/x11\", features = [\"xlib\"] }"
+      }
+    ]
+  },
+  { "name": "tokio-socks", "url": "https://github.com/rustdesk-org/tokio-socks", "commit": "bdb9aa3de5bac41602d0742b8ef6bbc6bfebd127" },
+  { "name": "wallpaper", "url": "https://github.com/rustdesk-org/wallpaper.rs", "commit": "ce4a0cd3f58327c7cc44d15a63706fb0c022bacf" },
+  {
+    "name": "wezterm",
+    "url": "https://github.com/rustdesk-org/wezterm",
+    "commit": "80174f8009f41565f0fa8c66dab90d4f9211ae16",
+    "include": ["pty", "filedescriptor", "LICENSE.md", "README.md"]
+  },
+  { "name": "tray-icon", "url": "https://github.com/tauri-apps/tray-icon", "commit": "0a5835b0e6828e37a1f781de9c2d671ae7a939e6" },
+  { "name": "cidre", "url": "https://github.com/yury/cidre.git", "commit": "f05c4288f9870c9fab53272ddafd6ec01c7b2dbf" }
+]

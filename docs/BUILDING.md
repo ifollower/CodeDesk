@@ -30,6 +30,38 @@ The Rust client depends on native media, capture, input, and UI libraries. Once 
 cargo build --locked
 ```
 
+### Windows client
+
+Install Visual Studio 2022 C++ Build Tools and the Windows SDK, plus LLVM with
+`libclang.dll`. Then prepare the static media libraries used by the Rust
+bindings:
+
+```powershell
+winget install --exact --id LLVM.LLVM --source winget
+
+$env:LIBCLANG_PATH = "C:\Program Files\LLVM\bin"
+$env:VCPKG_ROOT = "$env:USERPROFILE\.local\share\vcpkg"
+
+New-Item -ItemType Directory -Force -Path (Split-Path $env:VCPKG_ROOT) | Out-Null
+if (-not (Test-Path "$env:VCPKG_ROOT\.git")) {
+    git clone https://github.com/microsoft/vcpkg.git $env:VCPKG_ROOT
+}
+& "$env:VCPKG_ROOT\bootstrap-vcpkg.bat" -disableMetrics
+& "$env:VCPKG_ROOT\vcpkg.exe" install --classic `
+    aom:x64-windows-static `
+    libvpx:x64-windows-static `
+    libyuv:x64-windows-static `
+    opus:x64-windows-static `
+    --overlay-ports="$PWD\res\vcpkg" `
+    --x-install-root="$env:VCPKG_ROOT\installed"
+
+make build-client
+```
+
+The Makefile uses `%USERPROFILE%\.local\share\vcpkg` as the default vcpkg
+root on Windows. Set `LIBCLANG_PATH` persistently if builds are normally run
+from a new terminal.
+
 ### Apple Silicon macOS
 
 The capture library requires static `aom`, `libvpx`, and `libyuv` packages. Homebrew no longer provides `libyuv`, so install these packages with vcpkg instead of creating a fake Homebrew Cellar entry:
@@ -204,15 +236,28 @@ unless independently built and signed CodeDesk driver packages are placed at
 `drivers/CodeDeskPrinterDriver/CodeDeskPrinterDriver.inf` in the application
 directory.
 
-## Self-hosted release runners
+## Release runners
 
-The tag workflow expects one runner with each custom label:
+Windows and Apple packages use clean GitHub-hosted runners. The workflow pins
+`windows-2025`, `macos-26-intel`, Xcode from `.xcode-version`, Rust 1.87.0,
+Flutter 3.24.5, and the vcpkg baseline from `vcpkg.json`. Cargo, Flutter, and
+vcpkg binary caches are restored between runs; uploaded build artifacts are
+retained for seven days.
+
+The Linux server/Android job still expects one Docker-capable runner with this
+custom label:
 
 ```text
 self-hosted, codedesk-linux
-self-hosted, codedesk-macos
-self-hosted, codedesk-windows
 ```
+
+No Windows or macOS build tools need to be installed on a developer machine.
+For an unsigned validation build, open **Actions > CodeDesk Release > Run
+workflow**, enter the Cargo/Flutter version, select the `dev` profile, and leave
+the iOS option disabled. Manual runs use only GitHub-hosted validation,
+Windows, and macOS runners; they do not wait for the Linux/Android runner.
+Tag-triggered builds always use the signed `release` profile, include iOS, and
+run the Docker-based Linux/Android release job.
 
 Configure the public `CODEDESK_*` values as GitHub repository variables.
 Configure certificate passwords, base64-encoded keystores/certificates,
@@ -221,7 +266,8 @@ provisioning profiles, and notary credentials as GitHub Actions secrets; see
 
 The workflow imports credentials into temporary files/keychains, deletes them
 in `always()` cleanup steps, builds all five target groups, and creates a draft
-GitHub Release. It does not push a container image.
+GitHub Release for tag-triggered builds. Manual runs upload Actions artifacts
+without creating a release. It does not push a container image.
 
 To publish version `X.Y.Z`, first update the Cargo and Flutter versions, then:
 

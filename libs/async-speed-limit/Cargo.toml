@@ -1,0 +1,36 @@
+[package]
+name = "async-speed-limit"
+version = "0.3.1"
+authors = ["The TiKV Project Developers"]
+license = "MIT OR Apache-2.0"
+edition = "2018"
+repository = "https://github.com/tikv/async-speed-limit"
+description = "Asynchronously speed-limiting multiple byte streams"
+readme = "README.md"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[dependencies]
+futures-timer = { version = "3.0", optional = true }
+futures-io = { version = "0.3", optional = true }
+futures-core = { version = "0.3", optional = true }
+pin-project-lite = "0.2"
+
+[features]
+default = ["futures-io", "fused-future", "standard-clock"]
+standard-clock = ["futures-timer"]
+fused-future = ["futures-core"]
+read-initializer = ["futures-io/unstable", "futures-io/read-initializer"]
+doc = []
+
+[dev-dependencies]
+futures-executor = "0.3"
+futures-util = { version = "0.3.1", default-features = false, features = ["std", "channel", "io", "io-compat"] }
+rand = "0.8"
+tokio = { version = "1.7", features = ["full"] }
+criterion = "0.3"
+
+[[bench]]
+name = "standard_clock"
+harness = false

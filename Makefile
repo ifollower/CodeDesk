@@ -3,7 +3,12 @@ DOCKER ?= docker
 SERVER_MANIFEST := server/Cargo.toml
 SERVER_IMAGE ?= codedesk-server
 DATABASE_URL ?= sqlite://$(abspath server/db_v2.sqlite3)
-VCPKG_ROOT ?= $(HOME)/.local/share/vcpkg
+ifeq ($(OS),Windows_NT)
+CODEDESK_USER_HOME := $(USERPROFILE)
+else
+CODEDESK_USER_HOME := $(HOME)
+endif
+VCPKG_ROOT ?= $(CODEDESK_USER_HOME)/.local/share/vcpkg
 VCPKG_INSTALLED_ROOT ?= $(VCPKG_ROOT)/installed
 ENV_FILE ?= .env
 PROFILE ?= dev
@@ -34,7 +39,7 @@ VERSION_ARG = $(if $(strip $(VERSION)),--version $(VERSION),)
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check check-client check-server test test-common test-server test-release build build-client build-server doctor package-local package-server package-server-all docker-android-builder package-android install-android package-macos package-ios package-windows docker-server server-up server-logs server-down release-check release-config-check
+.PHONY: help check check-client check-server check-local-deps test test-common test-server test-release build build-client build-server doctor package-local package-server package-server-all docker-android-builder package-android install-android package-macos package-ios package-windows docker-server server-up server-logs server-down release-check release-config-check
 
 help:
 	@echo "make check           Check the client and all server binaries"
@@ -43,6 +48,7 @@ help:
 	@echo "make doctor          Check build tools for the current host"
 	@echo "make check-client    Check the CodeDesk client"
 	@echo "make check-server    Check hbbs, hbbr, and server utilities"
+	@echo "make check-local-deps Reject Cargo dependencies that fetch Git repositories"
 	@echo "make test-common     Test the shared hbb_common library"
 	@echo "make test-server     Test the server workspace"
 	@echo "make test-release    Test the unified packaging script"
@@ -70,6 +76,9 @@ check-client:
 
 check-server:
 	$(CARGO) check --manifest-path $(SERVER_MANIFEST) --locked --bins
+
+check-local-deps:
+	$(PYTHON) scripts/check_local_dependencies.py
 
 test: test-common test-server test-release
 
