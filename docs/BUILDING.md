@@ -252,6 +252,8 @@ self-hosted, codedesk-linux
 ```
 
 No Windows or macOS build tools need to be installed on a developer machine.
+The hosted Apple job installs NASM with Homebrew before compiling the AOM and
+libvpx vcpkg ports.
 For an unsigned validation build, open **Actions > CodeDesk Release > Run
 workflow**, enter the Cargo/Flutter version, select the `dev` profile, and leave
 the iOS option disabled. Manual runs use only GitHub-hosted validation,
