@@ -65,7 +65,7 @@ jobs:
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
-      CODEDESK_ANDROID_CACHE_HOST: ${{ runner.tool_cache }}/codedesk/android
+      CODEDESK_ANDROID_CACHE_HOST: ${{ github.workspace }}/target/docker-cache/android
     steps:
       - uses: actions/checkout@v6
       - uses: docker/setup-qemu-action@v3
@@ -112,10 +112,10 @@ jobs:
     needs: validate
     runs-on: macos-26-intel
     env:
-      VCPKG_ROOT: ${{ runner.temp }}/codedesk-vcpkg
-      VCPKG_INSTALLED_ROOT: ${{ runner.temp }}/codedesk-vcpkg/installed
-      VCPKG_BINARY_CACHE: ${{ runner.temp }}/codedesk-vcpkg-cache
-      VCPKG_BINARY_SOURCES: clear;files,${{ runner.temp }}/codedesk-vcpkg-cache,readwrite
+      VCPKG_ROOT: ${{ github.workspace }}/.ci/vcpkg
+      VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/.ci/vcpkg/installed
+      VCPKG_BINARY_CACHE: ${{ github.workspace }}/.ci/vcpkg-cache
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.ci/vcpkg-cache,readwrite
       APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
       APPLE_DEVELOPER_ID_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
       APPLE_DISTRIBUTION_P12_BASE64: ${{ secrets.APPLE_DISTRIBUTION_P12_BASE64 }}
@@ -192,10 +192,10 @@ jobs:
     needs: validate
     runs-on: windows-2025
     env:
-      VCPKG_ROOT: ${{ runner.temp }}/codedesk-vcpkg
-      VCPKG_INSTALLED_ROOT: ${{ runner.temp }}/codedesk-vcpkg/installed
-      VCPKG_BINARY_CACHE: ${{ runner.temp }}/codedesk-vcpkg-cache
-      VCPKG_BINARY_SOURCES: clear;files,${{ runner.temp }}/codedesk-vcpkg-cache,readwrite
+      VCPKG_ROOT: ${{ github.workspace }}/.ci/vcpkg
+      VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/.ci/vcpkg/installed
+      VCPKG_BINARY_CACHE: ${{ github.workspace }}/.ci/vcpkg-cache
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.ci/vcpkg-cache,readwrite
       WINDOWS_SIGNING_PASSWORD: ${{ secrets.WINDOWS_SIGNING_PASSWORD }}
       WINDOWS_TIMESTAMP_URL: ${{ vars.WINDOWS_TIMESTAMP_URL }}
     steps:
