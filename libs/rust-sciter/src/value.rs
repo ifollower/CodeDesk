@@ -174,7 +174,7 @@ use ::om::IAsset;
 pub struct Value
 {
 	data: VALUE,
-	tmp: * mut Value,
+	tmp: ::std::sync::Mutex<Vec<Box<Value>>>,
 }
 
 /// `sciter::Value` can be transferred across thread boundaries.
@@ -185,7 +185,7 @@ impl Value {
 
 	/// Return a new Sciter value object ([`undefined`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined)).
 	pub const fn new() -> Value {
-		Value { data: VALUE::new(), tmp: ::std::ptr::null_mut() }
+		Value { data: VALUE::new(), tmp: ::std::sync::Mutex::new(Vec::new()) }
 	}
 
 	/// Make an explicit [array](https://sciter.com/docs/content/script/Array.htm) value with the given length.
@@ -577,20 +577,14 @@ impl Value {
 		return v;
 	}
 
-  #[allow(clippy::mut_from_ref)]
-	fn ensure_tmp_mut(&self) -> &mut Value {
-		let cp = self as *const Value;
-		let mp = cp as *mut Value;
-		let me = unsafe { &mut *mp };
-		return me.ensure_tmp();
-	}
-
-	fn ensure_tmp(&mut self) -> &mut Value {
-		if self.tmp.is_null() {
-			let tmp = Box::new(Value::new());
-			self.tmp = Box::into_raw(tmp);
-		}
-		return unsafe { &mut *self.tmp };
+	fn cache_tmp(&self, value: Box<Value>) -> &Value {
+		let ptr = &*value as *const Value;
+		let mut values = self.tmp.lock()
+			.unwrap_or_else(|poisoned| poisoned.into_inner());
+		values.push(value);
+		// Boxes keep their allocations stable when the surrounding Vec grows. The
+		// cache is owned by self, so this reference cannot outlive the allocation.
+		unsafe { &*ptr }
 	}
 
 	/// Returns `true` is `self` is `undefined` or has zero elements.
@@ -816,10 +810,6 @@ impl ::std::fmt::Debug for Value {
 /// Destroy pointed value.
 impl Drop for Value {
 	fn drop(&mut self) {
-		// drop the attached side-data if any.
-		if !self.tmp.is_null() {
-			let _drop_tmp = unsafe { Box::from_raw(self.tmp) };
-		}
 		if std::thread::panicking() {
 			// it is fine to do nothing for the non-reference types.
 			if self.is_primitive() {
@@ -861,19 +851,9 @@ impl ::std::cmp::PartialEq for Value {
 impl ::std::ops::Index<usize> for Value {
 	type Output = Value;
 	fn index(&self, index: usize) -> &Self::Output {
-		let tmp = self.ensure_tmp_mut();
+		let mut tmp = Box::new(Value::new());
 		(_API.ValueNthElementValue)(self.as_cptr(), index as INT, tmp.as_ptr());
-		return tmp;
-	}
-}
-
-/// Set item by index for array type.
-#[cfg(notworking)]
-impl ::std::ops::IndexMut<usize> for Value {
-	fn index_mut(&mut self, index: usize) -> &mut Value {
-		let tmp = self.ensure_tmp_mut();
-		(_API.ValueNthElementValue)(self.as_cptr(), index as INT, tmp.as_ptr());
-		return tmp;
+		self.cache_tmp(tmp)
 	}
 }
 
@@ -881,9 +861,9 @@ impl ::std::ops::IndexMut<usize> for Value {
 impl ::std::ops::Index<Value> for Value {
 	type Output = Value;
 	fn index(&self, key: Value) -> &Self::Output {
-		let tmp = self.ensure_tmp_mut();
+		let mut tmp = Box::new(Value::new());
 		(_API.ValueGetValueOfKey)(self.as_cptr(), key.as_cptr(), tmp.as_ptr());
-		return tmp;
+		self.cache_tmp(tmp)
 	}
 }
 
@@ -891,20 +871,9 @@ impl ::std::ops::Index<Value> for Value {
 impl ::std::ops::Index<&'static str> for Value {
 	type Output = Value;
 	fn index(&self, key: &'static str) -> &Self::Output {
-		let tmp = self.ensure_tmp_mut();
+		let mut tmp = Box::new(Value::new());
 		(_API.ValueGetValueOfKey)(self.as_cptr(), Value::from(key).as_cptr(), tmp.as_ptr());
-		return tmp;
-	}
-}
-
-/// Set item by key for map type.
-#[cfg(notworking)]
-impl ::std::ops::IndexMut<Value> for Value {
-	fn index_mut<'a>(&'a mut self, key: Value) -> &'a mut Value {
-		let ptr = self.as_ptr();
-		let tmp = self.ensure_tmp();
-		(_API.ValueSetValueToKey)(ptr, key.as_cptr(), tmp.as_ptr());
-		return tmp;
+		self.cache_tmp(tmp)
 	}
 }
 
