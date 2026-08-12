@@ -26,6 +26,17 @@ class ReleaseScriptTests(unittest.TestCase):
             with self.assertRaises(release.ReleaseError):
                 release.release_check(release.cargo_version(), profile="release")
 
+    @mock.patch("release.run")
+    @mock.patch("release.subprocess.run")
+    @mock.patch("release.command_exists", return_value=True)
+    def test_release_rust_requires_rustfmt(
+        self, _command_exists, subprocess_run, run
+    ):
+        run.return_value.stdout = "1.87.0-x86_64-pc-windows-msvc\n"
+        subprocess_run.return_value.returncode = 1
+        with self.assertRaisesRegex(release.ReleaseError, "rustfmt is required"):
+            release.ensure_release_rust()
+
     def test_ios_export_options(self):
         with tempfile.TemporaryDirectory() as temporary:
             destination = Path(temporary) / "ExportOptions.plist"

@@ -154,6 +154,17 @@ def ensure_release_rust() -> None:
             f"Rust {RUST_TOOLCHAIN} is required for release builds; run "
             f"`rustup toolchain install {RUST_TOOLCHAIN}`"
         )
+    rustfmt = subprocess.run(
+        ["rustup", "run", RUST_TOOLCHAIN, "rustfmt", "--version"],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if rustfmt.returncode != 0:
+        raise ReleaseError(
+            f"rustfmt is required for Rust {RUST_TOOLCHAIN}; run "
+            f"`rustup component add --toolchain {RUST_TOOLCHAIN} rustfmt`"
+        )
 
 
 def ensure_vcpkg_triplets(triplets: tuple[str, ...]) -> None:

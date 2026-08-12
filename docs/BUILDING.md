@@ -11,7 +11,7 @@ Install the pinned release toolchain without changing the toolchain used for
 ordinary development:
 
 ```bash
-rustup toolchain install 1.87.0
+rustup toolchain install 1.87.0 --component rustfmt
 ```
 
 The root and `server/` are separate Cargo workspaces with separate lockfiles. Run commands from the repository root so paths and packaging contexts are consistent.

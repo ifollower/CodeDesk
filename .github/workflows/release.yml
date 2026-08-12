@@ -140,8 +140,9 @@ jobs:
       - name: Install pinned Rust release toolchain
         shell: bash
         run: |
-          rustup toolchain install 1.87.0 --profile minimal
+          rustup toolchain install 1.87.0 --profile minimal --component rustfmt
           rustup target add --toolchain 1.87.0 aarch64-apple-darwin x86_64-apple-darwin aarch64-apple-ios
+          rustup run 1.87.0 rustfmt --version
       - name: Install Apple native build tools
         shell: bash
         run: |
@@ -212,7 +213,9 @@ jobs:
           cache: true
       - name: Install pinned Rust release toolchain
         shell: powershell
-        run: rustup toolchain install 1.87.0 --profile minimal
+        run: |
+          rustup toolchain install 1.87.0 --profile minimal --component rustfmt
+          rustup run 1.87.0 rustfmt --version
       - uses: actions/cache@v4
         with:
           path: |
