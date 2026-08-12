@@ -196,7 +196,10 @@ jobs:
 
   windows:
     needs: validate
-    runs-on: windows-2025
+    # Flutter 3.24 only maps Visual Studio 2019/2022 CMake generators. The
+    # windows-2025 image now ships Visual Studio 2026, which Flutter mistakes
+    # for Visual Studio 2019. Pin VS 2022 until the Flutter SDK is upgraded.
+    runs-on: windows-2022
     env:
       VCPKG_ROOT: ${{ github.workspace }}/.ci/vcpkg
       VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/.ci/vcpkg/installed
