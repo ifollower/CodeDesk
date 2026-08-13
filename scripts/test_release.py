@@ -7,6 +7,13 @@ import release
 
 
 class ReleaseScriptTests(unittest.TestCase):
+    def test_macos_rust_library_matches_xcode_project(self):
+        project = (
+            release.ROOT / "flutter" / "macos" / "Runner.xcodeproj" / "project.pbxproj"
+        ).read_text(encoding="utf-8")
+        expected_path = f"../../target/release/{release.MACOS_RUST_LIBRARY}"
+        self.assertIn(expected_path, project)
+
     def test_repository_versions_match(self):
         flutter_version, build_number = release.flutter_version()
         self.assertEqual(release.cargo_version(), flutter_version)

@@ -27,6 +27,7 @@ SERVER_IMAGE = "codedesk-server"
 FLUTTER_VERSION = "3.24.5"
 RUST_TOOLCHAIN = "1.87.0"
 MACOS_TARGETS = ("aarch64-apple-darwin", "x86_64-apple-darwin")
+MACOS_RUST_LIBRARY = "liblibrustdesk.dylib"
 
 
 class ReleaseError(RuntimeError):
@@ -595,11 +596,11 @@ def package_macos(version: str, *, profile: str) -> None:
             "lipo",
             "-create",
             *[
-                str(ROOT / "target" / target / "release" / "liblibrustdesk.dylib")
+                str(ROOT / "target" / target / "release" / MACOS_RUST_LIBRARY)
                 for target in MACOS_TARGETS
             ],
             "-output",
-            str(release_dir / "librustdesk.dylib"),
+            str(release_dir / MACOS_RUST_LIBRARY),
         ]
     )
     run(
@@ -722,11 +723,11 @@ def package_macos(version: str, *, profile: str) -> None:
         run(["xcrun", "stapler", "staple", str(dmg)])
 
     app_binary = app / "Contents" / "MacOS" / "CodeDesk"
-    rust_dsym = output / "librustdesk.dylib.dSYM"
+    rust_dsym = output / f"{MACOS_RUST_LIBRARY}.dSYM"
     service_dsym = output / "service.dSYM"
     app_dsym = output / "CodeDesk.app.dSYM"
     for binary, dsym in (
-        (release_dir / "librustdesk.dylib", rust_dsym),
+        (release_dir / MACOS_RUST_LIBRARY, rust_dsym),
         (release_dir / "service", service_dsym),
         (app_binary, app_dsym),
     ):
