@@ -7,6 +7,23 @@ import release
 
 
 class ReleaseScriptTests(unittest.TestCase):
+    def test_intel_swift_back_deployment_library_is_allowed(self):
+        self.assertTrue(
+            release._is_intel_swift_back_deployment_library(
+                Path("Contents/Frameworks/libswiftCore.dylib"), {"x86_64"}
+            )
+        )
+        self.assertFalse(
+            release._is_intel_swift_back_deployment_library(
+                Path("Contents/Frameworks/liblibrustdesk.dylib"), {"x86_64"}
+            )
+        )
+        self.assertFalse(
+            release._is_intel_swift_back_deployment_library(
+                Path("Contents/Frameworks/libswiftCore.dylib"), {"arm64"}
+            )
+        )
+
     def test_macos_rust_library_matches_xcode_project(self):
         project = (
             release.ROOT / "flutter" / "macos" / "Runner.xcodeproj" / "project.pbxproj"

@@ -474,6 +474,17 @@ def _macos_cargo_environment(target: str) -> dict[str, str]:
     return environment
 
 
+def _is_intel_swift_back_deployment_library(
+    relative_path: Path, architectures: set[str]
+) -> bool:
+    return (
+        relative_path.parent == Path("Contents/Frameworks")
+        and relative_path.name.startswith("libswift")
+        and relative_path.suffix == ".dylib"
+        and architectures == {"x86_64"}
+    )
+
+
 def _verify_universal_macho(app: Path) -> None:
     failures: list[str] = []
     for candidate in app.rglob("*"):
@@ -488,7 +499,14 @@ def _verify_universal_macho(app: Path) -> None:
         if "Mach-O" not in result.stdout:
             continue
         archs = run(["lipo", "-archs", str(candidate)], capture=True).stdout.split()
-        if not {"arm64", "x86_64"}.issubset(set(archs)):
+        architectures = set(archs)
+        relative_path = candidate.relative_to(app)
+        # Swift back-deployment libraries are embedded for Intel macOS versions
+        # before the ABI-stable runtime shipped in the OS. Apple silicon starts
+        # at macOS 11 and uses the system runtime, so these copies are x86_64-only.
+        if _is_intel_swift_back_deployment_library(relative_path, architectures):
+            continue
+        if not {"arm64", "x86_64"}.issubset(architectures):
             failures.append(f"{candidate.relative_to(app)} ({' '.join(archs)})")
     if failures:
         raise ReleaseError(
